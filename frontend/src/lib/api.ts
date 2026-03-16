@@ -219,6 +219,27 @@ export async function fetchSessionUser(): Promise<SessionUser | null> {
   return response.json();
 }
 
+export async function logoutUser(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to log out");
+  }
+}
+
+export async function fetchAdminUsers(): Promise<SessionUser[]> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/admin/users`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load admin users");
+  }
+  return response.json();
+}
+
 export async function fetchBillingPlans(): Promise<BillingPlan[]> {
   const response = await fetch(`${API_BASE_URL}/api/billing/plans`, {
     cache: "no-store",

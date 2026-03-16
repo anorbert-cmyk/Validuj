@@ -3,7 +3,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { fetchSessionUser, loginUser, registerUser, type SessionUser } from "@/lib/api";
+import {
+  fetchSessionUser,
+  loginUser,
+  logoutUser,
+  registerUser,
+  type SessionUser,
+} from "@/lib/api";
 
 type AuthCardProps = {
   initialUser: SessionUser | null;
@@ -45,6 +51,17 @@ export function AuthCard({ initialUser }: AuthCardProps) {
     }
   }
 
+  async function handleLogout() {
+    try {
+      setError(null);
+      await logoutUser();
+      queryClient.setQueryData(["session"], null);
+      queryClient.invalidateQueries();
+    } catch (logoutError) {
+      setError(logoutError instanceof Error ? logoutError.message : "Unable to log out.");
+    }
+  }
+
   return (
     <section className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6">
       <div className="space-y-2">
@@ -56,6 +73,13 @@ export function AuthCard({ initialUser }: AuthCardProps) {
         <div className="mt-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
           <p className="text-sm text-emerald-100">Signed in as {user.email}</p>
           <p className="mt-2 text-xs uppercase tracking-[0.18em] text-emerald-200">{user.role}</p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-4 rounded-full border border-emerald-200/20 px-4 py-2 text-sm text-emerald-100 transition hover:border-emerald-100/40 hover:bg-white/5"
+          >
+            Log out
+          </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">

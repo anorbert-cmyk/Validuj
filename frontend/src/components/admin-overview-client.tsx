@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchAdminOverview, type AdminOverview } from "@/lib/api";
+import { fetchAdminOverview, fetchAdminUsers, type AdminOverview, type SessionUser } from "@/lib/api";
 
 const emptyOverview: AdminOverview = {
   total_runs: 0,
@@ -15,6 +15,11 @@ export function AdminOverviewClient() {
   const { data: overview = emptyOverview, error, isLoading } = useQuery<AdminOverview>({
     queryKey: ["admin-overview"],
     queryFn: fetchAdminOverview,
+  });
+  const { data: users = [] } = useQuery<SessionUser[]>({
+    queryKey: ["admin-users"],
+    queryFn: fetchAdminUsers,
+    retry: false,
   });
 
   return (
@@ -100,6 +105,27 @@ export function AdminOverviewClient() {
             )}
           </div>
         </article>
+      </section>
+
+      <section className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6">
+        <h2 className="text-2xl font-semibold text-white">Registered users</h2>
+        <div className="mt-6 space-y-4">
+          {users.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-white/15 p-5 text-sm text-slate-400">
+              No user records are visible for the current session.
+            </div>
+          ) : (
+            users.map((user) => (
+              <div
+                key={user.email}
+                className="flex items-center justify-between rounded-3xl border border-white/10 bg-slate-950/70 px-4 py-3"
+              >
+                <span className="text-sm text-slate-200">{user.email}</span>
+                <span className="text-xs uppercase tracking-[0.18em] text-cyan-200">{user.role}</span>
+              </div>
+            ))
+          )}
+        </div>
       </section>
     </div>
   );
