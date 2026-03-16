@@ -122,6 +122,8 @@ API endpoints:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
+- `POST /api/auth/request-reset`
+- `POST /api/auth/reset-password`
 - `POST /api/runs`
 - `POST /api/projects`
 - `POST /api/billing/checkout/{plan_name}`
@@ -313,6 +315,7 @@ The expanded product now includes several practical security controls:
 
 - signed session cookies with expiry
 - server-backed session records with revocation
+- password reset token flow
 - stronger password hashing than the original fast hash
 - owner-based access control for runs and projects
 - admin-only access for operations endpoints

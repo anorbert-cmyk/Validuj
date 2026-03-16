@@ -113,6 +113,8 @@ Open:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
+- `POST /api/auth/request-reset`
+- `POST /api/auth/reset-password`
 - `POST /api/billing/checkout/{plan_name}`
 - `POST /api/billing/subscription/{plan_name}`
 - `POST /api/webhooks/stripe`

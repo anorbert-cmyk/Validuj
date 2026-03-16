@@ -12,6 +12,7 @@ from app.schemas import (
     CreateProjectRequest,
     Citation,
     ProjectSummary,
+    PasswordResetConfirmRequest,
     RunEvent,
     SearchResultBundle,
     SessionRecord,
@@ -62,6 +63,19 @@ def create_user(email: str, password_hash: str, role: str = "user") -> None:
             VALUES (?, ?, ?, ?, ?)
             """,
             (email.strip().lower(), password_hash, role, now, now),
+        )
+
+
+def update_user_password(email: str, password_hash: str) -> None:
+    now = utc_now()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE users
+            SET password_hash = ?, updated_at = ?
+            WHERE email = ?
+            """,
+            (password_hash, now, email.strip().lower()),
         )
 
 
@@ -222,6 +236,50 @@ def list_sessions_for_email(email: str, limit: int = 20) -> list[SessionRecord]:
         )
         for row in rows
     ]
+
+
+def create_password_reset_token(email: str, token: str, expires_at: str) -> None:
+    now = utc_now()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO password_reset_tokens (token, email, expires_at, used_at, created_at)
+            VALUES (?, ?, ?, NULL, ?)
+            """,
+            (token, email.strip().lower(), expires_at, now),
+        )
+
+
+def consume_password_reset_token(token: str) -> dict[str, Any] | None:
+    now = utc_now()
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT token, email, expires_at, used_at
+            FROM password_reset_tokens
+            WHERE token = ?
+            """,
+            (token,),
+        ).fetchone()
+        if row is None:
+            return None
+        if row["used_at"] is not None:
+            return None
+        if datetime.fromisoformat(row["expires_at"]).timestamp() < datetime.now(timezone.utc).timestamp():
+            return None
+        connection.execute(
+            """
+            UPDATE password_reset_tokens
+            SET used_at = ?
+            WHERE token = ?
+            """,
+            (now, token),
+        )
+    return {
+        "token": row["token"],
+        "email": row["email"],
+        "expires_at": row["expires_at"],
+    }
 
 
 def create_run(

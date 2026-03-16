@@ -88,6 +88,10 @@ def create_csrf_token() -> str:
     return secrets.token_urlsafe(24)
 
 
+def create_one_time_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
 def decode_session_token(settings: Settings, token: str) -> dict[str, str] | None:
     try:
         payload_part, signature_part = token.split(".", 1)

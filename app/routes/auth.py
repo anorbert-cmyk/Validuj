@@ -8,19 +8,23 @@ from app.auth import (
     SESSION_TTL_SECONDS,
     create_csrf_token,
     create_session_token_with_id,
+    create_one_time_token,
     hash_password,
     verify_password,
 )
 from app.repository import (
     create_session_record,
+    create_password_reset_token,
     create_user,
+    consume_password_reset_token,
     get_user_by_email,
     list_sessions_for_email,
     list_users,
     revoke_session_record,
+    update_user_password,
 )
 from app.security import auth_rate_limit, require_admin, require_csrf, require_session
-from app.schemas import LoginRequest, RegisterRequest
+from app.schemas import LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest
 
 
 router = APIRouter(prefix="/api/auth")
@@ -125,3 +129,30 @@ async def admin_users(session=Depends(require_admin)):
 @router.get("/sessions")
 async def sessions(session=Depends(require_session)):
     return [record.model_dump(mode="json") for record in list_sessions_for_email(session["email"])]
+
+
+@router.post("/request-reset")
+async def request_reset(payload: PasswordResetRequest, _: None = Depends(auth_rate_limit)):
+    user = get_user_by_email(payload.email)
+    if user is None:
+        return {"status": "ok"}
+    token = create_one_time_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+    create_password_reset_token(payload.email, token, expires_at.isoformat())
+    return {
+        "status": "ok",
+        "reset_token": token,
+        "expires_at": expires_at.isoformat(),
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(
+    payload: PasswordResetConfirmRequest,
+    _: None = Depends(auth_rate_limit),
+):
+    token_record = consume_password_reset_token(payload.token)
+    if token_record is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    update_user_password(token_record["email"], hash_password(payload.password))
+    return {"status": "password_updated"}
