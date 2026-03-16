@@ -43,6 +43,11 @@ export function DashboardClient({ initialProjects, initialRuns }: DashboardClien
   });
 
   const recentRuns = useMemo(() => runs.slice(0, 8), [runs]);
+  const starterIdeas = [
+    "AI operations copilot for boutique physiotherapy clinics that drafts claim-ready notes and patient follow-up plans.",
+    "AI compliance assistant for solo rehab practitioners that turns messy session notes into insurer-ready documentation.",
+    "Vertical SaaS for private physiotherapy studios that predicts dropout risk and automates follow-up outreach.",
+  ];
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -180,6 +185,21 @@ export function DashboardClient({ initialProjects, initialRuns }: DashboardClien
               onChange={(event) => setIdeaText(event.target.value)}
             />
           </label>
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Starter prompts</p>
+            <div className="flex flex-wrap gap-2">
+              {starterIdeas.map((idea) => (
+                <button
+                  key={idea}
+                  type="button"
+                  onClick={() => setIdeaText(idea)}
+                  className="rounded-full border border-white/10 px-3 py-2 text-xs text-slate-300 transition hover:border-cyan-400/40 hover:text-white"
+                >
+                  Use example
+                </button>
+              ))}
+            </div>
+          </div>
           {error ? <p className="text-sm text-rose-300">{error}</p> : null}
           <div className="flex flex-wrap items-center gap-4">
             <button

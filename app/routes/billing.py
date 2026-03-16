@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
+from app.payments import create_checkout_destination
 from app.repository import get_subscription, upsert_subscription
 from app.security import require_session
 
@@ -73,3 +74,16 @@ async def select_subscription(plan_name: str, session=Depends(require_session)):
         return {"status": "invalid_plan"}
     subscription = upsert_subscription(session["email"], plan_name=plan_name, status="active")
     return subscription.model_dump(mode="json")
+
+
+@router.post("/checkout/{plan_name}")
+async def create_checkout(request: Request, plan_name: str, session=Depends(require_session)):
+    chosen = get_plan_definition(plan_name)
+    if chosen is None or plan_name == "free":
+        return {"status": "invalid_plan"}
+    payload = create_checkout_destination(
+        request.app.state.settings,
+        plan_name=plan_name,
+        email=session["email"],
+    )
+    return payload

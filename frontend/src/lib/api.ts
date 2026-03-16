@@ -17,6 +17,13 @@ export type RunEvent = {
   created_at: string;
 };
 
+export type Citation = {
+  title: string;
+  url: string;
+  snippet?: string | null;
+  source: string;
+};
+
 export type StageRecord = {
   stage_index: number;
   stage_name: string;
@@ -25,6 +32,7 @@ export type StageRecord = {
   model_name: string | null;
   summary: string | null;
   markdown: string | null;
+  citations?: Citation[];
 };
 
 export type RunRecord = RunSummary & {
@@ -64,6 +72,13 @@ export type SubscriptionRecord = {
   run_limit?: number;
   created_at?: string;
   updated_at?: string;
+};
+
+export type CheckoutDestination = {
+  provider?: "stripe" | "mock";
+  checkout_url?: string;
+  publishable_key?: string | null;
+  status?: string;
 };
 
 export type AdminOverview = {
@@ -275,6 +290,17 @@ export async function selectSubscription(planName: string): Promise<Subscription
   });
   if (!response.ok) {
     throw new Error("Failed to update subscription");
+  }
+  return response.json();
+}
+
+export async function createCheckout(planName: string): Promise<CheckoutDestination> {
+  const response = await fetch(`${API_BASE_URL}/api/billing/checkout/${planName}`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to create checkout");
   }
   return response.json();
 }

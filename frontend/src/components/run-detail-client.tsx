@@ -11,6 +11,7 @@ import {
   type RunEvent,
   type RunRecord,
 } from "@/lib/api";
+import { MarkdownReport } from "@/components/markdown-report";
 
 type RunDetailClientProps = {
   runId: string;
@@ -192,9 +193,33 @@ export function RunDetailClient({ runId, initialRun = null }: RunDetailClientPro
                 <p className="mt-4 text-sm text-slate-500">This stage is still preparing its output.</p>
               )}
               {stage.markdown ? (
-                <pre className="mt-6 overflow-x-auto whitespace-pre-wrap rounded-3xl border border-white/10 bg-slate-950/80 p-5 text-xs leading-6 text-slate-200">
-                  {stage.markdown}
-                </pre>
+                <div className="mt-6 rounded-3xl border border-white/10 bg-slate-950/80 p-5">
+                  <MarkdownReport content={stage.markdown} />
+                </div>
+              ) : null}
+              {stage.citations?.length ? (
+                <div className="mt-6 space-y-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-cyan-200">Evidence</p>
+                  <div className="grid gap-3">
+                    {stage.citations.map((citation) => (
+                      <a
+                        key={`${stage.stage_index}-${citation.url}`}
+                        href={citation.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 transition hover:border-cyan-400/40"
+                      >
+                        <p className="text-sm font-medium text-white">{citation.title}</p>
+                        {citation.snippet ? (
+                          <p className="mt-2 text-xs leading-6 text-slate-400">{citation.snippet}</p>
+                        ) : null}
+                        <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-cyan-200">
+                          {citation.source}
+                        </p>
+                      </a>
+                    ))}
+                  </div>
+                </div>
               ) : null}
             </article>
           ))}
@@ -204,9 +229,9 @@ export function RunDetailClient({ runId, initialRun = null }: RunDetailClientPro
       {currentRun.final_markdown ? (
         <section className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-8">
           <p className="text-sm uppercase tracking-[0.24em] text-cyan-200">Compiled report</p>
-          <pre className="mt-5 overflow-x-auto whitespace-pre-wrap rounded-3xl border border-white/10 bg-slate-950/80 p-6 text-xs leading-6 text-slate-200">
-            {currentRun.final_markdown}
-          </pre>
+          <div className="mt-5 rounded-3xl border border-white/10 bg-slate-950/80 p-6">
+            <MarkdownReport content={currentRun.final_markdown} />
+          </div>
         </section>
       ) : null}
     </div>

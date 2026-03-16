@@ -6,3 +6,4 @@ python-multipart==0.0.20
 duckduckgo-search==8.0.0
 beautifulsoup4==4.13.3
 pydantic==2.11.1
+stripe==14.4.1

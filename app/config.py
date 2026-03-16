@@ -9,6 +9,7 @@ from functools import lru_cache
 class Settings:
     app_name: str
     app_base_url: str
+    frontend_base_url: str
     app_env: str
     database_path: str
     openrouter_api_key: str | None
@@ -20,6 +21,9 @@ class Settings:
     local_model_id: str
     auth_secret: str
     admin_email: str
+    stripe_secret_key: str | None
+    stripe_publishable_key: str | None
+    stripe_webhook_secret: str | None
 
     @property
     def has_openrouter(self) -> bool:
@@ -43,6 +47,7 @@ def get_settings() -> Settings:
     return Settings(
         app_name=_env("APP_NAME", "Validuj") or "Validuj",
         app_base_url=_env("APP_BASE_URL", "http://127.0.0.1:8000") or "http://127.0.0.1:8000",
+        frontend_base_url=_env("FRONTEND_BASE_URL", "http://127.0.0.1:3000") or "http://127.0.0.1:3000",
         app_env=_env("APP_ENV", "development") or "development",
         database_path=_env("DATABASE_PATH", "/workspace/data/validuj.sqlite3") or "/workspace/data/validuj.sqlite3",
         openrouter_api_key=_env("OPENROUTER_API_KEY"),
@@ -58,4 +63,7 @@ def get_settings() -> Settings:
         local_model_id=_env("LOCAL_MODEL_ID", "local-synthesis-engine") or "local-synthesis-engine",
         auth_secret=_env("AUTH_SECRET", "validuj-dev-secret") or "validuj-dev-secret",
         admin_email=_env("ADMIN_EMAIL", "admin@validuj.local") or "admin@validuj.local",
+        stripe_secret_key=_env("STRIPE_SECRET_KEY"),
+        stripe_publishable_key=_env("STRIPE_PUBLISHABLE_KEY"),
+        stripe_webhook_secret=_env("STRIPE_WEBHOOK_SECRET"),
     )

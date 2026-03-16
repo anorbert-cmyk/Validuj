@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  createCheckout,
   fetchBillingPlans,
   fetchCurrentSubscription,
   fetchSessionUser,
@@ -28,6 +29,15 @@ export function SettingsClient() {
     mutationFn: selectSubscription,
     onSuccess: (data) => {
       queryClient.setQueryData(["subscription"], data);
+    },
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: createCheckout,
+    onSuccess: (data) => {
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      }
     },
   });
 
@@ -92,6 +102,16 @@ export function SettingsClient() {
                 >
                   {subscription?.plan_name === plan.name ? "Current plan" : "Select plan"}
                 </button>
+                {plan.name !== "free" ? (
+                  <button
+                    type="button"
+                    onClick={() => checkoutMutation.mutate(plan.name)}
+                    disabled={!user || checkoutMutation.isPending}
+                    className="mt-3 rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-white/30 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {checkoutMutation.isPending ? "Preparing checkout..." : "Start checkout"}
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>
