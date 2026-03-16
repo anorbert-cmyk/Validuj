@@ -2,6 +2,7 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export type RunSummary = {
+  project_public_id: string | null;
   public_id: string;
   idea_text: string;
   status: "queued" | "running" | "completed" | "failed";
@@ -32,6 +33,15 @@ export type RunRecord = RunSummary & {
   failure_message: string | null;
   events: RunEvent[];
   stages: StageRecord[];
+};
+
+export type ProjectSummary = {
+  public_id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  run_count: number;
 };
 
 export type AdminOverview = {
@@ -66,13 +76,19 @@ export async function fetchRun(runId: string): Promise<RunRecord> {
   return response.json();
 }
 
-export async function createRun(ideaText: string): Promise<{ run_id: string }> {
+export async function createRun(
+  ideaText: string,
+  projectPublicId?: string,
+): Promise<{ run_id: string }> {
   const response = await fetch(`${API_BASE_URL}/api/runs`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ idea_text: ideaText }),
+    body: JSON.stringify({
+      idea_text: ideaText,
+      project_public_id: projectPublicId ?? null,
+    }),
   });
   if (!response.ok) {
     throw new Error("Failed to create run");
@@ -86,6 +102,33 @@ export async function fetchAdminOverview(): Promise<AdminOverview> {
   });
   if (!response.ok) {
     throw new Error("Failed to load admin overview");
+  }
+  return response.json();
+}
+
+export async function fetchProjects(): Promise<ProjectSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/api/projects`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load projects");
+  }
+  return response.json();
+}
+
+export async function createProject(payload: {
+  name: string;
+  description?: string;
+}): Promise<{ project_id: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/projects`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to create project");
   }
   return response.json();
 }

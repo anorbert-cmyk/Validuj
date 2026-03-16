@@ -9,7 +9,9 @@ from app.db import get_connection
 from app.schemas import (
     AnalysisRunRecord,
     AnalysisRunSummary,
+    CreateProjectRequest,
     Citation,
+    ProjectSummary,
     RunEvent,
     SearchResultBundle,
     StageOutput,
@@ -27,19 +29,33 @@ def _parse_dt(value: str | None) -> datetime | None:
     return datetime.fromisoformat(value)
 
 
-def create_run(idea_text: str) -> str:
+def create_project(payload: CreateProjectRequest) -> str:
+    public_id = uuid4().hex[:12]
+    now = utc_now()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO projects (public_id, name, description, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (public_id, payload.name.strip(), (payload.description or "").strip() or None, now, now),
+        )
+    return public_id
+
+
+def create_run(idea_text: str, project_public_id: str | None = None) -> str:
     public_id = uuid4().hex[:12]
     now = utc_now()
     with get_connection() as connection:
         connection.execute(
             """
             INSERT INTO analysis_runs (
-                public_id, idea_text, status, current_stage, current_stage_name,
+                project_public_id, public_id, idea_text, status, current_stage, current_stage_name,
                 final_markdown, failure_message, created_at, updated_at
             )
-            VALUES (?, ?, 'queued', NULL, NULL, NULL, NULL, ?, ?)
+            VALUES (?, ?, ?, 'queued', NULL, NULL, NULL, NULL, ?, ?)
             """,
-            (public_id, idea_text.strip(), now, now),
+            (project_public_id, public_id, idea_text.strip(), now, now),
         )
     append_event(public_id, "run_created", {"status": "queued"})
     return public_id
@@ -243,6 +259,7 @@ def get_run(run_public_id: str) -> AnalysisRunRecord | None:
         for row in stage_rows
     ]
     return AnalysisRunRecord(
+        project_public_id=run_row["project_public_id"],
         public_id=run_row["public_id"],
         idea_text=run_row["idea_text"],
         status=run_row["status"],
@@ -266,6 +283,7 @@ def list_runs(limit: int = 20) -> list[AnalysisRunSummary]:
         rows = connection.execute(
             """
             SELECT public_id, idea_text, status, current_stage_name, created_at, updated_at
+            , project_public_id
             FROM analysis_runs
             ORDER BY updated_at DESC
             LIMIT ?
@@ -274,12 +292,46 @@ def list_runs(limit: int = 20) -> list[AnalysisRunSummary]:
         ).fetchall()
     return [
         AnalysisRunSummary(
+            project_public_id=row["project_public_id"],
             public_id=row["public_id"],
             idea_text=row["idea_text"],
             status=row["status"],
             current_stage_name=row["current_stage_name"],
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+        for row in rows
+    ]
+
+
+def list_projects(limit: int = 20) -> list[ProjectSummary]:
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT
+              p.public_id,
+              p.name,
+              p.description,
+              p.created_at,
+              p.updated_at,
+              COUNT(ar.id) AS run_count
+            FROM projects p
+            LEFT JOIN analysis_runs ar
+              ON ar.project_public_id = p.public_id
+            GROUP BY p.public_id, p.name, p.description, p.created_at, p.updated_at
+            ORDER BY p.updated_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [
+        ProjectSummary(
+            public_id=row["public_id"],
+            name=row["name"],
+            description=row["description"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+            run_count=row["run_count"],
         )
         for row in rows
     ]

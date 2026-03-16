@@ -89,9 +89,13 @@ async def demo_report(request: Request):
 
 
 @router.post("/runs")
-async def submit_run(request: Request, idea_text: str = Form(...)):
-    payload = CreateRunRequest(idea_text=idea_text)
-    run_id = create_run(payload.idea_text)
+async def submit_run(
+    request: Request,
+    idea_text: str = Form(...),
+    project_public_id: str | None = Form(default=None),
+):
+    payload = CreateRunRequest(idea_text=idea_text, project_public_id=project_public_id)
+    run_id = create_run(payload.idea_text, payload.project_public_id)
     spawn_analysis(run_id, request.app.state.analysis_runner)
     return RedirectResponse(url=f"/runs/{run_id}", status_code=303)
 

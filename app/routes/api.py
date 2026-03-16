@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.repository import create_run, get_admin_overview, get_run, list_runs
-from app.schemas import CreateRunRequest
+from app.repository import create_project, create_run, get_admin_overview, get_run, list_projects, list_runs
+from app.schemas import CreateProjectRequest, CreateRunRequest
 from app.services.analysis_runner import spawn_analysis
 
 
@@ -17,9 +17,20 @@ async def healthcheck():
 
 @router.post("/runs")
 async def create_run_api(request: Request, payload: CreateRunRequest):
-    run_id = create_run(payload.idea_text)
+    run_id = create_run(payload.idea_text, payload.project_public_id)
     spawn_analysis(run_id, request.app.state.analysis_runner)
     return {"run_id": run_id, "status": "queued"}
+
+
+@router.get("/projects")
+async def list_projects_api():
+    return [project.model_dump(mode="json") for project in list_projects()]
+
+
+@router.post("/projects")
+async def create_project_api(payload: CreateProjectRequest):
+    project_id = create_project(payload)
+    return {"project_id": project_id, "status": "created"}
 
 
 @router.get("/runs")

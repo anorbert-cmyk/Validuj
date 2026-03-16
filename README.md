@@ -18,6 +18,7 @@ It takes a business idea, runs it through **six specialist stages**, passes stru
 - model routing with remote provider support
 - deterministic local fallback for no-key environments
 - live run streaming over Server-Sent Events
+- lightweight project/workspace grouping for dashboard organization
 - persistent reports in SQLite
 - public SEO pages + private `noindex` run pages
 
@@ -98,8 +99,11 @@ Open:
 ### API
 
 - `GET /api/health`
+- `GET /api/projects`
 - `GET /api/runs`
+- `POST /api/projects`
 - `POST /api/runs`
+- `GET /api/admin/overview`
 - `GET /api/runs/{run_id}`
 - `GET /api/stream/runs/{run_id}`
 
@@ -112,6 +116,7 @@ Open:
 - `/security`
 - `/faq`
 - `/dashboard`
+- `/admin`
 - `/runs/[run_id]`
 
 ## Example API request

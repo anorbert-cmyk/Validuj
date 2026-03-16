@@ -205,12 +205,16 @@ Current frontend responsibilities:
 - security page
 - FAQ page
 - dashboard shell
+- lightweight project workspace creation and selection
 - run detail shell with live SSE-backed updates
 
 The frontend talks to the FastAPI backend over HTTP using:
 
+- `GET /api/projects`
 - `GET /api/runs`
+- `POST /api/projects`
 - `POST /api/runs`
+- `GET /api/admin/overview`
 - `GET /api/runs/{run_id}`
 - `GET /api/stream/runs/{run_id}`
 

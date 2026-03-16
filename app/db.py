@@ -9,8 +9,18 @@ from app.config import get_settings
 
 
 SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  public_id TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  description TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS analysis_runs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_public_id TEXT,
   public_id TEXT NOT NULL UNIQUE,
   idea_text TEXT NOT NULL,
   status TEXT NOT NULL,
@@ -56,6 +66,11 @@ def ensure_database() -> None:
     database_path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(database_path) as connection:
         connection.executescript(SCHEMA_SQL)
+        existing_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(analysis_runs)").fetchall()
+        }
+        if "project_public_id" not in existing_columns:
+            connection.execute("ALTER TABLE analysis_runs ADD COLUMN project_public_id TEXT")
         connection.commit()
 
 

@@ -49,6 +49,7 @@ class StageRunRecord(BaseModel):
 
 
 class AnalysisRunRecord(BaseModel):
+    project_public_id: str | None = None
     public_id: str
     idea_text: str
     status: RunStatus
@@ -63,6 +64,7 @@ class AnalysisRunRecord(BaseModel):
 
 
 class AnalysisRunSummary(BaseModel):
+    project_public_id: str | None = None
     public_id: str
     idea_text: str
     status: RunStatus
@@ -71,8 +73,23 @@ class AnalysisRunSummary(BaseModel):
     updated_at: datetime
 
 
+class ProjectSummary(BaseModel):
+    public_id: str
+    name: str
+    description: str | None = None
+    created_at: datetime
+    updated_at: datetime
+    run_count: int = 0
+
+
 class CreateRunRequest(BaseModel):
     idea_text: str = Field(min_length=20, max_length=4000)
+    project_public_id: str | None = None
+
+
+class CreateProjectRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    description: str | None = Field(default=None, max_length=400)
 
 
 class ProviderResponse(BaseModel):

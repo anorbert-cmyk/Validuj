@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { DashboardClient } from "@/components/dashboard-client";
-import { fetchRuns } from "@/lib/api";
+import { fetchProjects, fetchRuns } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -11,10 +11,11 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage() {
   const runs = await fetchRuns().catch(() => []);
+  const projects = await fetchProjects().catch(() => []);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-16">
-      <DashboardClient initialRuns={runs} />
+      <DashboardClient initialProjects={projects} initialRuns={runs} />
     </div>
   );
 }
