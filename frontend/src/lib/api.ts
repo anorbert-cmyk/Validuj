@@ -1,0 +1,69 @@
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+
+export type RunSummary = {
+  public_id: string;
+  idea_text: string;
+  status: "queued" | "running" | "completed" | "failed";
+  current_stage_name: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RunEvent = {
+  event_type: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+};
+
+export type StageRecord = {
+  stage_index: number;
+  stage_name: string;
+  status: "pending" | "running" | "completed" | "failed";
+  provider_name: string | null;
+  model_name: string | null;
+  summary: string | null;
+  markdown: string | null;
+};
+
+export type RunRecord = RunSummary & {
+  current_stage: number | null;
+  final_markdown: string | null;
+  failure_message: string | null;
+  events: RunEvent[];
+  stages: StageRecord[];
+};
+
+export async function fetchRuns(): Promise<RunSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/api/runs`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load runs");
+  }
+  return response.json();
+}
+
+export async function fetchRun(runId: string): Promise<RunRecord> {
+  const response = await fetch(`${API_BASE_URL}/api/runs/${runId}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load run");
+  }
+  return response.json();
+}
+
+export async function createRun(ideaText: string): Promise<{ run_id: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/runs`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ idea_text: ideaText }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to create run");
+  }
+  return response.json();
+}

@@ -87,23 +87,33 @@ This keeps the pipeline predictable and mirrors the main value of more advanced 
 
 ### Web layer
 
-- **FastAPI**
-- **Jinja templates**
-- **Static CSS/JS**
+- **FastAPI backend**
+- **Next.js frontend**
 
 Public pages:
 
-- `/`
-- `/how-it-works`
-- `/demo-report`
+- Frontend:
+  - `/`
+  - `/how-it-works`
+  - `/pricing`
+  - `/demo-report`
+  - `/security`
+  - `/faq`
+- Backend:
+  - legacy SEO-ready public pages still exist during transition
 
 Private run page:
 
-- `/runs/{run_id}`
+- Frontend:
+  - `/dashboard`
+  - `/runs/{run_id}`
+- Backend:
+  - `/runs/{run_id}` remains available as the original server-rendered implementation
 
 API endpoints:
 
 - `GET /api/health`
+- `GET /api/runs`
 - `POST /api/runs`
 - `GET /api/runs/{run_id}`
 - `GET /api/stream/runs/{run_id}`
@@ -182,6 +192,30 @@ This supports two important UX paths:
 1. live updates for an active run
 2. event catch-up when the page reconnects after part of the run already finished
 
+## Frontend layer
+
+The repository now contains a dedicated `frontend/` Next.js application.
+
+Current frontend responsibilities:
+
+- marketing homepage
+- methodology page
+- pricing page
+- demo report page
+- security page
+- FAQ page
+- dashboard shell
+- run detail shell with live SSE-backed updates
+
+The frontend talks to the FastAPI backend over HTTP using:
+
+- `GET /api/runs`
+- `POST /api/runs`
+- `GET /api/runs/{run_id}`
+- `GET /api/stream/runs/{run_id}`
+
+This is the first major step away from an all-in-one server-rendered product and toward a split frontend/backend production architecture.
+
 ## SEO architecture
 
 SEO is intentionally scoped to the public product surface rather than user-generated pages.
@@ -190,7 +224,10 @@ SEO is intentionally scoped to the public product surface rather than user-gener
 
 - homepage
 - methodology page
+- pricing page
 - demo report page
+- security page
+- FAQ page
 
 These pages are:
 

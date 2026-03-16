@@ -1,8 +1,8 @@
 # Validuj
 
-Validuj is a working multi-agent startup validation app.
+Validuj is an evolving multi-agent startup validation platform.
 
-It takes a business idea, runs it through **six specialist stages**, passes structured handoff state between them, stores the full run in SQLite, streams progress via SSE, and exposes SEO-ready public pages for product discovery.
+It takes a business idea, runs it through **six specialist stages**, passes structured handoff state between them, stores the full run in SQLite, streams progress via SSE, and now includes a separate **Next.js frontend** that is becoming the production product surface.
 
 ## What it does
 
@@ -23,16 +23,20 @@ It takes a business idea, runs it through **six specialist stages**, passes stru
 
 ## Stack
 
-- Python 3.12
-- FastAPI
-- Jinja2 templates
-- SQLite
-- DuckDuckGo / Tavily search
-- OpenRouter-compatible remote model routing
+- Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS
+- Backend: Python 3.12, FastAPI
+- Data: SQLite today, planned migration to Postgres
+- Runtime: SSE streaming, background in-process orchestration
+- Research: DuckDuckGo / Tavily search
+- Model routing: OpenRouter-compatible remote path + deterministic local fallback
 
 ## Project structure
 
 ```text
+frontend/
+  src/app/             # marketing + dashboard + run detail pages
+  src/components/      # client components
+  src/lib/             # API bindings
 app/
   agents/              # six stage specs
   providers/           # local + OpenRouter providers
@@ -50,6 +54,7 @@ docs/
 
 ```bash
 pip3 install --user -r requirements.txt
+npm install --prefix frontend
 ```
 
 ### 2. Optional configuration
@@ -63,17 +68,26 @@ Without any keys, the app still works using the local synthesis engine and DuckD
 
 ### 3. Run the app
 
+Backend:
+
 ```bash
 python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
+Frontend:
+
+```bash
+npm run dev --prefix frontend -- --hostname 127.0.0.1 --port 3000
+```
+
 Open:
 
-- `http://127.0.0.1:8000/`
+- Frontend product shell: `http://127.0.0.1:3000/`
+- Backend public pages/API: `http://127.0.0.1:8000/`
 
 ## Endpoints
 
-### Public pages
+### Backend public pages
 
 - `/`
 - `/how-it-works`
@@ -84,9 +98,21 @@ Open:
 ### API
 
 - `GET /api/health`
+- `GET /api/runs`
 - `POST /api/runs`
 - `GET /api/runs/{run_id}`
 - `GET /api/stream/runs/{run_id}`
+
+### Frontend routes
+
+- `/`
+- `/how-it-works`
+- `/pricing`
+- `/demo-report`
+- `/security`
+- `/faq`
+- `/dashboard`
+- `/runs/[run_id]`
 
 ## Example API request
 
