@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from app.repository import create_run, get_run
+from app.repository import create_run, get_run, user_owns_project, user_owns_run
+from app.security import require_session
 from app.schemas import CreateRunRequest
 from app.seo import demo_structured_data, homepage_structured_data, make_meta, methodology_structured_data
 from app.services.analysis_runner import spawn_analysis
@@ -93,18 +94,27 @@ async def submit_run(
     request: Request,
     idea_text: str = Form(...),
     project_public_id: str | None = Form(default=None),
+    session=Depends(require_session),
 ):
     payload = CreateRunRequest(idea_text=idea_text, project_public_id=project_public_id)
-    run_id = create_run(payload.idea_text, payload.project_public_id)
+    if payload.project_public_id and not user_owns_project(payload.project_public_id, session["email"]):
+        raise HTTPException(status_code=403, detail="Project access denied")
+    run_id = create_run(
+        payload.idea_text,
+        payload.project_public_id,
+        owner_email=session["email"],
+    )
     spawn_analysis(run_id, request.app.state.analysis_runner)
     return RedirectResponse(url=f"/runs/{run_id}", status_code=303)
 
 
 @router.get("/runs/{run_id}")
-async def run_detail(request: Request, run_id: str):
+async def run_detail(request: Request, run_id: str, session=Depends(require_session)):
     run = get_run(run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    if session["role"] != "admin" and not user_owns_run(run_id, session["email"]):
+        raise HTTPException(status_code=403, detail="Run access denied")
     settings = request.app.state.settings
     meta = make_meta(
         settings,

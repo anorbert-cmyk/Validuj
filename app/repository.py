@@ -30,16 +30,23 @@ def _parse_dt(value: str | None) -> datetime | None:
     return datetime.fromisoformat(value)
 
 
-def create_project(payload: CreateProjectRequest) -> str:
+def create_project(payload: CreateProjectRequest, *, owner_email: str) -> str:
     public_id = uuid4().hex[:12]
     now = utc_now()
     with get_connection() as connection:
         connection.execute(
             """
-            INSERT INTO projects (public_id, name, description, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO projects (public_id, owner_email, name, description, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (public_id, payload.name.strip(), (payload.description or "").strip() or None, now, now),
+            (
+                public_id,
+                owner_email.strip().lower(),
+                payload.name.strip(),
+                (payload.description or "").strip() or None,
+                now,
+                now,
+            ),
         )
     return public_id
 
@@ -99,19 +106,24 @@ def list_users(limit: int = 50) -> list[UserSummary]:
     ]
 
 
-def create_run(idea_text: str, project_public_id: str | None = None) -> str:
+def create_run(
+    idea_text: str,
+    project_public_id: str | None = None,
+    *,
+    owner_email: str,
+) -> str:
     public_id = uuid4().hex[:12]
     now = utc_now()
     with get_connection() as connection:
         connection.execute(
             """
             INSERT INTO analysis_runs (
-                project_public_id, public_id, idea_text, status, current_stage, current_stage_name,
+                owner_email, project_public_id, public_id, idea_text, status, current_stage, current_stage_name,
                 final_markdown, failure_message, created_at, updated_at
             )
-            VALUES (?, ?, ?, 'queued', NULL, NULL, NULL, NULL, ?, ?)
+            VALUES (?, ?, ?, ?, 'queued', NULL, NULL, NULL, NULL, ?, ?)
             """,
-            (project_public_id, public_id, idea_text.strip(), now, now),
+            (owner_email.strip().lower(), project_public_id, public_id, idea_text.strip(), now, now),
         )
     append_event(public_id, "run_created", {"status": "queued"})
     return public_id
@@ -315,6 +327,7 @@ def get_run(run_public_id: str) -> AnalysisRunRecord | None:
         for row in stage_rows
     ]
     return AnalysisRunRecord(
+        owner_email=run_row["owner_email"],
         project_public_id=run_row["project_public_id"],
         public_id=run_row["public_id"],
         idea_text=run_row["idea_text"],
@@ -334,20 +347,34 @@ def get_public_sitemap_runs() -> list[str]:
     return []
 
 
-def list_runs(limit: int = 20) -> list[AnalysisRunSummary]:
+def list_runs(limit: int = 20, *, owner_email: str | None = None) -> list[AnalysisRunSummary]:
     with get_connection() as connection:
-        rows = connection.execute(
-            """
-            SELECT public_id, idea_text, status, current_stage_name, created_at, updated_at
-            , project_public_id
-            FROM analysis_runs
-            ORDER BY updated_at DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        if owner_email is None:
+            rows = connection.execute(
+                """
+                SELECT public_id, idea_text, status, current_stage_name, created_at, updated_at,
+                       project_public_id, owner_email
+                FROM analysis_runs
+                ORDER BY updated_at DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                """
+                SELECT public_id, idea_text, status, current_stage_name, created_at, updated_at,
+                       project_public_id, owner_email
+                FROM analysis_runs
+                WHERE owner_email = ?
+                ORDER BY updated_at DESC
+                LIMIT ?
+                """,
+                (owner_email.strip().lower(), limit),
+            ).fetchall()
     return [
         AnalysisRunSummary(
+            owner_email=row["owner_email"],
             project_public_id=row["project_public_id"],
             public_id=row["public_id"],
             idea_text=row["idea_text"],
@@ -360,28 +387,52 @@ def list_runs(limit: int = 20) -> list[AnalysisRunSummary]:
     ]
 
 
-def list_projects(limit: int = 20) -> list[ProjectSummary]:
+def list_projects(limit: int = 20, *, owner_email: str | None = None) -> list[ProjectSummary]:
     with get_connection() as connection:
-        rows = connection.execute(
-            """
-            SELECT
-              p.public_id,
-              p.name,
-              p.description,
-              p.created_at,
-              p.updated_at,
-              COUNT(ar.id) AS run_count
-            FROM projects p
-            LEFT JOIN analysis_runs ar
-              ON ar.project_public_id = p.public_id
-            GROUP BY p.public_id, p.name, p.description, p.created_at, p.updated_at
-            ORDER BY p.updated_at DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        if owner_email is None:
+            rows = connection.execute(
+                """
+                SELECT
+                  p.public_id,
+                  p.owner_email,
+                  p.name,
+                  p.description,
+                  p.created_at,
+                  p.updated_at,
+                  COUNT(ar.id) AS run_count
+                FROM projects p
+                LEFT JOIN analysis_runs ar
+                  ON ar.project_public_id = p.public_id
+                GROUP BY p.public_id, p.owner_email, p.name, p.description, p.created_at, p.updated_at
+                ORDER BY p.updated_at DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                """
+                SELECT
+                  p.public_id,
+                  p.owner_email,
+                  p.name,
+                  p.description,
+                  p.created_at,
+                  p.updated_at,
+                  COUNT(ar.id) AS run_count
+                FROM projects p
+                LEFT JOIN analysis_runs ar
+                  ON ar.project_public_id = p.public_id
+                WHERE p.owner_email = ?
+                GROUP BY p.public_id, p.owner_email, p.name, p.description, p.created_at, p.updated_at
+                ORDER BY p.updated_at DESC
+                LIMIT ?
+                """,
+                (owner_email.strip().lower(), limit),
+            ).fetchall()
     return [
         ProjectSummary(
+            owner_email=row["owner_email"],
             public_id=row["public_id"],
             name=row["name"],
             description=row["description"],
@@ -439,3 +490,29 @@ def get_admin_overview() -> dict[str, Any]:
         "recent_failures": recent_failures,
         "total_runs": sum(status_totals.values()),
     }
+
+
+def user_owns_run(run_public_id: str, owner_email: str) -> bool:
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT 1
+            FROM analysis_runs
+            WHERE public_id = ? AND owner_email = ?
+            """,
+            (run_public_id, owner_email.strip().lower()),
+        ).fetchone()
+    return row is not None
+
+
+def user_owns_project(project_public_id: str, owner_email: str) -> bool:
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT 1
+            FROM projects
+            WHERE public_id = ? AND owner_email = ?
+            """,
+            (project_public_id, owner_email.strip().lower()),
+        ).fetchone()
+    return row is not None

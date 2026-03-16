@@ -1,13 +1,26 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Cookie, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
-from app.auth import create_session_token, decode_session_token, hash_password, verify_password
+from app.auth import create_session_token, hash_password, verify_password
 from app.repository import create_user, get_user_by_email, list_users
+from app.security import require_admin, require_session
 from app.schemas import LoginRequest, RegisterRequest
 
 
 router = APIRouter(prefix="/api/auth")
+
+
+def _set_session_cookie(request: Request, response: Response, token: str) -> None:
+    secure = request.app.state.settings.app_env == "production"
+    response.set_cookie(
+        "validuj_session",
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=secure,
+        max_age=60 * 60 * 24 * 7,
+    )
 
 
 @router.post("/register")
@@ -20,7 +33,7 @@ async def register(request: Request, response: Response, payload: RegisterReques
     role = "admin" if payload.email.strip().lower() == settings.admin_email.strip().lower() else "user"
     create_user(payload.email, hash_password(payload.password), role=role)
     token = create_session_token(settings, email=payload.email.strip().lower(), role=role)
-    response.set_cookie("validuj_session", token, httponly=True, samesite="lax")
+    _set_session_cookie(request, response, token)
     return {"email": payload.email.strip().lower(), "role": role}
 
 
@@ -32,7 +45,7 @@ async def login(request: Request, response: Response, payload: LoginRequest):
 
     settings = request.app.state.settings
     token = create_session_token(settings, email=user["email"], role=user["role"])
-    response.set_cookie("validuj_session", token, httponly=True, samesite="lax")
+    _set_session_cookie(request, response, token)
     return {"email": user["email"], "role": user["role"]}
 
 
@@ -43,20 +56,10 @@ async def logout(response: Response):
 
 
 @router.get("/me")
-async def me(request: Request, validuj_session: str | None = Cookie(default=None)):
-    if not validuj_session:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    session = decode_session_token(request.app.state.settings, validuj_session)
-    if session is None:
-        raise HTTPException(status_code=401, detail="Invalid session")
+async def me(session=Depends(require_session)):
     return session
 
 
 @router.get("/admin/users")
-async def admin_users(request: Request, validuj_session: str | None = Cookie(default=None)):
-    if not validuj_session:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    session = decode_session_token(request.app.state.settings, validuj_session)
-    if session is None or session.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
+async def admin_users(session=Depends(require_admin)):
     return [user.model_dump(mode="json") for user in list_users()]

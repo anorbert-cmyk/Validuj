@@ -64,7 +64,11 @@ export type AdminOverview = {
 export async function fetchRuns(): Promise<RunSummary[]> {
   const response = await fetch(`${API_BASE_URL}/api/runs`, {
     cache: "no-store",
+    credentials: "include",
   });
+  if (response.status === 401) {
+    return [];
+  }
   if (!response.ok) {
     throw new Error("Failed to load runs");
   }
@@ -74,6 +78,7 @@ export async function fetchRuns(): Promise<RunSummary[]> {
 export async function fetchRun(runId: string): Promise<RunRecord> {
   const response = await fetch(`${API_BASE_URL}/api/runs/${runId}`, {
     cache: "no-store",
+    credentials: "include",
   });
   if (!response.ok) {
     throw new Error("Failed to load run");
@@ -94,6 +99,7 @@ export async function createRun(
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({
       idea_text: ideaText,
       project_public_id: projectPublicId ?? null,
@@ -108,6 +114,7 @@ export async function createRun(
 export async function fetchAdminOverview(): Promise<AdminOverview> {
   const response = await fetch(`${API_BASE_URL}/api/admin/overview`, {
     cache: "no-store",
+    credentials: "include",
   });
   if (!response.ok) {
     throw new Error("Failed to load admin overview");
@@ -118,7 +125,11 @@ export async function fetchAdminOverview(): Promise<AdminOverview> {
 export async function fetchProjects(): Promise<ProjectSummary[]> {
   const response = await fetch(`${API_BASE_URL}/api/projects`, {
     cache: "no-store",
+    credentials: "include",
   });
+  if (response.status === 401) {
+    return [];
+  }
   if (!response.ok) {
     throw new Error("Failed to load projects");
   }
@@ -134,6 +145,7 @@ export async function createProject(payload: {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(payload),
   });
   if (!response.ok) {

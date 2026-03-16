@@ -1,10 +1,18 @@
 "use client";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { createProject, createRun, type ProjectSummary, type RunSummary } from "@/lib/api";
+import {
+  createProject,
+  createRun,
+  fetchProjects,
+  fetchRuns,
+  type ProjectSummary,
+  type RunSummary,
+} from "@/lib/api";
 
 type DashboardClientProps = {
   initialProjects: ProjectSummary[];
@@ -19,10 +27,22 @@ export function DashboardClient({ initialProjects, initialRuns }: DashboardClien
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [projects, setProjects] = useState(initialProjects);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const recentRuns = useMemo(() => initialRuns.slice(0, 8), [initialRuns]);
+  const { data: projects = initialProjects } = useQuery<ProjectSummary[]>({
+    queryKey: ["projects"],
+    queryFn: fetchProjects,
+    initialData: initialProjects,
+  });
+
+  const { data: runs = initialRuns } = useQuery<RunSummary[]>({
+    queryKey: ["runs"],
+    queryFn: fetchRuns,
+    initialData: initialRuns,
+  });
+
+  const recentRuns = useMemo(() => runs.slice(0, 8), [runs]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,6 +54,8 @@ export function DashboardClient({ initialProjects, initialRuns }: DashboardClien
       setError(null);
       setIsSubmitting(true);
       const result = await createRun(ideaText.trim(), selectedProjectId || undefined);
+      await queryClient.invalidateQueries({ queryKey: ["runs"] });
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
       router.push(`/runs/${result.run_id}`);
     } catch (submissionError) {
       setError(
@@ -66,7 +88,9 @@ export function DashboardClient({ initialProjects, initialRuns }: DashboardClien
         updated_at: new Date().toISOString(),
         run_count: 0,
       };
-      setProjects((current) => [newProject, ...current]);
+      queryClient.setQueryData<ProjectSummary[]>(["projects"], (current) =>
+        current ? [newProject, ...current] : [newProject],
+      );
       setSelectedProjectId(result.project_id);
       setProjectName("");
       setProjectDescription("");

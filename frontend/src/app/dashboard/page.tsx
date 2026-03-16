@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { AuthCard } from "@/components/auth-card";
 import { DashboardClient } from "@/components/dashboard-client";
-import { fetchProjects, fetchRuns, fetchSessionUser } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -11,14 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const runs = await fetchRuns().catch(() => []);
-  const projects = await fetchProjects().catch(() => []);
-  const sessionUser = await fetchSessionUser().catch(() => null);
-
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-16">
-      <AuthCard initialUser={sessionUser} />
-      <DashboardClient initialProjects={projects} initialRuns={runs} />
+      <AuthCard initialUser={null} />
+      <DashboardClient initialProjects={[]} initialRuns={[]} />
     </div>
   );
 }

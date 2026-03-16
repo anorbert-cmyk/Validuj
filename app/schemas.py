@@ -49,6 +49,7 @@ class StageRunRecord(BaseModel):
 
 
 class AnalysisRunRecord(BaseModel):
+    owner_email: str | None = None
     project_public_id: str | None = None
     public_id: str
     idea_text: str
@@ -64,6 +65,7 @@ class AnalysisRunRecord(BaseModel):
 
 
 class AnalysisRunSummary(BaseModel):
+    owner_email: str | None = None
     project_public_id: str | None = None
     public_id: str
     idea_text: str
@@ -74,6 +76,7 @@ class AnalysisRunSummary(BaseModel):
 
 
 class ProjectSummary(BaseModel):
+    owner_email: str | None = None
     public_id: str
     name: str
     description: str | None = None

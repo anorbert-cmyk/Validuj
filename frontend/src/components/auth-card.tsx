@@ -1,22 +1,26 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { loginUser, registerUser, type SessionUser } from "@/lib/api";
+import { fetchSessionUser, loginUser, registerUser, type SessionUser } from "@/lib/api";
 
 type AuthCardProps = {
   initialUser: SessionUser | null;
 };
 
 export function AuthCard({ initialUser }: AuthCardProps) {
-  const [user, setUser] = useState<SessionUser | null>(initialUser);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "register">("register");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const { data: user = initialUser } = useQuery<SessionUser | null>({
+    queryKey: ["session"],
+    queryFn: fetchSessionUser,
+    initialData: initialUser,
+  });
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -26,7 +30,7 @@ export function AuthCard({ initialUser }: AuthCardProps) {
       const payload = { email: email.trim(), password };
       const nextUser =
         mode === "register" ? await registerUser(payload) : await loginUser(payload);
-      setUser(nextUser);
+      queryClient.setQueryData(["session"], nextUser);
       queryClient.invalidateQueries();
       setEmail("");
       setPassword("");

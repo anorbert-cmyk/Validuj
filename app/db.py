@@ -12,6 +12,7 @@ SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   public_id TEXT NOT NULL UNIQUE,
+  owner_email TEXT,
   name TEXT NOT NULL,
   description TEXT,
   created_at TEXT NOT NULL,
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS analysis_runs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_email TEXT,
   project_public_id TEXT,
   public_id TEXT NOT NULL UNIQUE,
   idea_text TEXT NOT NULL,
@@ -78,8 +80,15 @@ def ensure_database() -> None:
         existing_columns = {
             row[1] for row in connection.execute("PRAGMA table_info(analysis_runs)").fetchall()
         }
+        if "owner_email" not in existing_columns:
+            connection.execute("ALTER TABLE analysis_runs ADD COLUMN owner_email TEXT")
         if "project_public_id" not in existing_columns:
             connection.execute("ALTER TABLE analysis_runs ADD COLUMN project_public_id TEXT")
+        project_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(projects)").fetchall()
+        }
+        if "owner_email" not in project_columns:
+            connection.execute("ALTER TABLE projects ADD COLUMN owner_email TEXT")
         connection.commit()
 
 

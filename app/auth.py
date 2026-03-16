@@ -3,21 +3,63 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import secrets
+import time
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 
 from app.config import Settings
 
 
+PASSWORD_SCHEME = "pbkdf2_sha256"
+PASSWORD_ITERATIONS = 200_000
+SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
+
+
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    salt = secrets.token_hex(16)
+    derived = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        PASSWORD_ITERATIONS,
+    ).hex()
+    return f"{PASSWORD_SCHEME}${PASSWORD_ITERATIONS}${salt}${derived}"
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return hmac.compare_digest(hash_password(password), password_hash)
+    if "$" not in password_hash:
+        legacy = hashlib.sha256(password.encode("utf-8")).hexdigest()
+        return hmac.compare_digest(legacy, password_hash)
+
+    try:
+        scheme, iteration_str, salt, expected = password_hash.split("$", 3)
+    except ValueError:
+        return False
+    if scheme != PASSWORD_SCHEME:
+        return False
+    try:
+        iterations = int(iteration_str)
+    except ValueError:
+        return False
+    derived = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        iterations,
+    ).hex()
+    return hmac.compare_digest(derived, expected)
 
 
 def create_session_token(settings: Settings, *, email: str, role: str) -> str:
-    payload = json.dumps({"email": email, "role": role}, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    payload = json.dumps(
+        {
+            "email": email,
+            "role": role,
+            "exp": int(time.time()) + SESSION_TTL_SECONDS,
+        },
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
     signature = hmac.new(settings.auth_secret.encode("utf-8"), payload, hashlib.sha256).hexdigest().encode("utf-8")
     return (
         urlsafe_b64encode(payload).decode("utf-8").rstrip("=")
@@ -46,7 +88,10 @@ def decode_session_token(settings: Settings, token: str) -> dict[str, str] | Non
         return None
     email = data.get("email")
     role = data.get("role")
-    if not isinstance(email, str) or not isinstance(role, str):
+    exp = data.get("exp")
+    if not isinstance(email, str) or not isinstance(role, str) or not isinstance(exp, int):
+        return None
+    if exp < int(time.time()):
         return None
     return {"email": email, "role": role}
 
