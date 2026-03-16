@@ -38,6 +38,8 @@ async def stream_run(request: Request, run_id: str):
                     yield _format_sse("heartbeat", {"ok": True})
         except StopAsyncIteration:
             return
+        finally:
+            await subscription.aclose()
 
     return StreamingResponse(
         event_generator(),

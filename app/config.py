@@ -53,5 +53,5 @@ def get_settings() -> Settings:
         openrouter_design_model=_env("OPENROUTER_DESIGN_MODEL", "openai/gpt-4.1")
         or "openai/gpt-4.1",
         tavily_api_key=_env("TAVILY_API_KEY"),
-        local_model_id=_env("LOCAL_MODEL_ID", "google/flan-t5-base") or "google/flan-t5-base",
+        local_model_id=_env("LOCAL_MODEL_ID", "local-synthesis-engine") or "local-synthesis-engine",
     )

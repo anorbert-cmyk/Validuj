@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 import httpx
 from duckduckgo_search import DDGS
 
@@ -49,7 +51,7 @@ class SearchService:
             with DDGS() as ddgs:
                 return list(ddgs.text(query, max_results=limit))
 
-        raw_results = await __import__("asyncio").to_thread(_run)
+        raw_results = await asyncio.to_thread(_run)
         results = [
             Citation(
                 title=item.get("title") or item.get("href") or "Result",
