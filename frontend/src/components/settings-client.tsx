@@ -61,6 +61,10 @@ export function SettingsClient() {
               <span className="text-slate-500">Plan status:</span>{" "}
               {subscription?.status ?? "inactive"}
             </p>
+            <p>
+              <span className="text-slate-500">Run limit:</span>{" "}
+              {subscription?.run_limit ?? 1}
+            </p>
           </div>
         </article>
 
@@ -75,6 +79,9 @@ export function SettingsClient() {
                 <p className="text-xs uppercase tracking-[0.18em] text-cyan-200">{plan.name}</p>
                 <p className="mt-3 text-3xl font-semibold text-white">
                   ${plan.price}
+                </p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">
+                  {plan.run_limit} runs
                 </p>
                 <p className="mt-3 text-sm leading-7 text-slate-300">{plan.description}</p>
                 <button

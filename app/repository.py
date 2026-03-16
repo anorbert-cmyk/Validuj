@@ -557,3 +557,16 @@ def user_owns_project(project_public_id: str, owner_email: str) -> bool:
             (project_public_id, owner_email.strip().lower()),
         ).fetchone()
     return row is not None
+
+
+def count_runs_for_owner(owner_email: str) -> int:
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM analysis_runs
+            WHERE owner_email = ?
+            """,
+            (owner_email.strip().lower(),),
+        ).fetchone()
+    return int(row["total"]) if row is not None else 0

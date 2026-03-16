@@ -53,6 +53,7 @@ export type BillingPlan = {
   name: string;
   price: number;
   currency: string;
+  run_limit: number;
   description: string;
 };
 
@@ -60,6 +61,7 @@ export type SubscriptionRecord = {
   email: string;
   plan_name: string;
   status: string;
+  run_limit?: number;
   created_at?: string;
   updated_at?: string;
 };
@@ -121,7 +123,8 @@ export async function createRun(
     }),
   });
   if (!response.ok) {
-    throw new Error("Failed to create run");
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(typeof payload.detail === "string" ? payload.detail : "Failed to create run");
   }
   return response.json();
 }
@@ -164,7 +167,8 @@ export async function createProject(payload: {
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error("Failed to create project");
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(typeof payload.detail === "string" ? payload.detail : "Failed to create project");
   }
   return response.json();
 }

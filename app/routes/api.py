@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
 from app.repository import (
+    count_runs_for_owner,
     create_project,
     create_run,
     get_admin_overview,
@@ -13,6 +14,7 @@ from app.repository import (
     user_owns_project,
     user_owns_run,
 )
+from app.routes.billing import current_subscription
 from app.security import require_admin, require_session
 from app.schemas import CreateProjectRequest, CreateRunRequest
 from app.services.analysis_runner import spawn_analysis
@@ -34,6 +36,14 @@ async def create_run_api(
 ):
     if payload.project_public_id and not user_owns_project(payload.project_public_id, session["email"]):
         raise HTTPException(status_code=403, detail="Project access denied")
+    subscription = await current_subscription(session)
+    run_limit = int(subscription.get("run_limit", 0))
+    current_count = count_runs_for_owner(session["email"])
+    if current_count >= run_limit:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Run limit reached for plan '{subscription.get('plan_name', 'free')}'.",
+        )
     run_id = create_run(
         payload.idea_text,
         payload.project_public_id,
