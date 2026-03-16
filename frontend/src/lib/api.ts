@@ -34,6 +34,18 @@ export type RunRecord = RunSummary & {
   stages: StageRecord[];
 };
 
+export type AdminOverview = {
+  total_runs: number;
+  status_totals: Record<string, number>;
+  provider_totals: Record<string, number>;
+  recent_failures: Array<{
+    public_id: string;
+    idea_text: string;
+    failure_message: string | null;
+    updated_at: string;
+  }>;
+};
+
 export async function fetchRuns(): Promise<RunSummary[]> {
   const response = await fetch(`${API_BASE_URL}/api/runs`, {
     cache: "no-store",
@@ -64,6 +76,16 @@ export async function createRun(ideaText: string): Promise<{ run_id: string }> {
   });
   if (!response.ok) {
     throw new Error("Failed to create run");
+  }
+  return response.json();
+}
+
+export async function fetchAdminOverview(): Promise<AdminOverview> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/overview`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load admin overview");
   }
   return response.json();
 }

@@ -58,6 +58,9 @@ export default function RootLayout({
                 >
                   Dashboard
                 </Link>
+                <Link href="/admin" className="transition hover:text-white">
+                  Admin
+                </Link>
               </nav>
             </div>
           </header>

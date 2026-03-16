@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.repository import create_run, get_run, list_runs
+from app.repository import create_run, get_admin_overview, get_run, list_runs
 from app.schemas import CreateRunRequest
 from app.services.analysis_runner import spawn_analysis
 
@@ -25,6 +25,11 @@ async def create_run_api(request: Request, payload: CreateRunRequest):
 @router.get("/runs")
 async def list_runs_api():
     return [run.model_dump(mode="json") for run in list_runs()]
+
+
+@router.get("/admin/overview")
+async def admin_overview_api():
+    return get_admin_overview()
 
 
 @router.get("/runs/{run_id}")

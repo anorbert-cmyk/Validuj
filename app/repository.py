@@ -283,3 +283,51 @@ def list_runs(limit: int = 20) -> list[AnalysisRunSummary]:
         )
         for row in rows
     ]
+
+
+def get_admin_overview() -> dict[str, Any]:
+    with get_connection() as connection:
+        run_rows = connection.execute(
+            """
+            SELECT status, COUNT(*) AS total
+            FROM analysis_runs
+            GROUP BY status
+            """
+        ).fetchall()
+        provider_rows = connection.execute(
+            """
+            SELECT provider_name, COUNT(*) AS total
+            FROM stage_runs
+            WHERE provider_name IS NOT NULL
+            GROUP BY provider_name
+            ORDER BY total DESC
+            """
+        ).fetchall()
+        failed_rows = connection.execute(
+            """
+            SELECT public_id, idea_text, failure_message, updated_at
+            FROM analysis_runs
+            WHERE status = 'failed'
+            ORDER BY updated_at DESC
+            LIMIT 10
+            """
+        ).fetchall()
+
+    status_totals = {row["status"]: row["total"] for row in run_rows}
+    provider_totals = {row["provider_name"]: row["total"] for row in provider_rows}
+    recent_failures = [
+        {
+            "public_id": row["public_id"],
+            "idea_text": row["idea_text"],
+            "failure_message": row["failure_message"],
+            "updated_at": row["updated_at"],
+        }
+        for row in failed_rows
+    ]
+
+    return {
+        "status_totals": status_totals,
+        "provider_totals": provider_totals,
+        "recent_failures": recent_failures,
+        "total_runs": sum(status_totals.values()),
+    }
