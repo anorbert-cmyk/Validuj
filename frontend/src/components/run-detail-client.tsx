@@ -83,6 +83,7 @@ export function RunDetailClient({ runId, initialRun = null }: RunDetailClientPro
   }, [currentRun, refetch]);
 
   const latestEvent = useMemo(() => currentRun?.events[currentRun.events.length - 1], [currentRun]);
+  const completedStages = currentRun?.stages.filter((stage) => stage.status === "completed").length ?? 0;
 
   if (isLoading && !currentRun) {
     return (
@@ -124,6 +125,33 @@ export function RunDetailClient({ runId, initialRun = null }: RunDetailClientPro
           <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Latest event</p>
             <p className="mt-2 text-sm text-white">{latestEvent?.event_type ?? "run_created"}</p>
+          </div>
+        </div>
+        <div className="mt-6 rounded-3xl border border-white/10 bg-slate-950/70 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Workflow completion</p>
+            <p className="text-sm text-slate-200">
+              {completedStages} / {currentRun.stages.length} stages
+            </p>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+            {currentRun.stages.map((stage) => (
+              <div
+                key={stage.stage_index}
+                className={`rounded-2xl border px-3 py-3 text-xs ${
+                  stage.status === "completed"
+                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+                    : stage.status === "running"
+                      ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-100"
+                      : stage.status === "failed"
+                        ? "border-rose-400/30 bg-rose-400/10 text-rose-100"
+                        : "border-white/10 bg-slate-900/60 text-slate-400"
+                }`}
+              >
+                <p className="font-semibold">{stage.stage_name}</p>
+                <p className="mt-2 uppercase tracking-[0.18em]">{stage.status}</p>
+              </div>
+            ))}
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-4">

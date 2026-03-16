@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { PricingClient } from "@/components/pricing-client";
 import { fetchBillingPlans } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -25,37 +26,7 @@ export default async function PricingPage() {
         </p>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-3">
-        {plans.map((tier) => (
-          <article
-            key={tier.name}
-            className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-8 shadow-lg shadow-slate-950/30"
-          >
-            <p className="text-sm uppercase tracking-[0.18em] text-cyan-200">{tier.name}</p>
-            <h2 className="mt-4 text-4xl font-semibold text-white">
-              ${tier.price}
-            </h2>
-            <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">
-              {tier.run_limit} runs
-            </p>
-            <p className="mt-4 text-sm leading-7 text-slate-300">{tier.description}</p>
-            <ul className="mt-6 space-y-3 text-sm text-slate-200">
-              <li className="flex gap-3">
-                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-cyan-300" />
-                <span>Six-agent report generation</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-cyan-300" />
-                <span>Live progress and persisted report history</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-cyan-300" />
-                <span>Plan-gated run capacity</span>
-              </li>
-            </ul>
-          </article>
-        ))}
-      </section>
+      <PricingClient initialPlans={plans} />
     </div>
   );
 }
