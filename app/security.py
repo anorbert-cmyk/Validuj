@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+from collections import defaultdict, deque
 from typing import TypedDict
 
 from fastapi import Cookie, HTTPException, Request
@@ -10,6 +12,9 @@ from app.auth import decode_session_token
 class SessionUser(TypedDict):
     email: str
     role: str
+
+
+_RATE_LIMIT_BUCKETS: dict[str, deque[float]] = defaultdict(deque)
 
 
 def require_session(
@@ -32,3 +37,24 @@ def require_admin(
     if session["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return session
+
+
+def enforce_rate_limit(request: Request, *, scope: str, limit: int, window_seconds: int) -> None:
+    client_host = request.client.host if request.client else "unknown"
+    key = f"{scope}:{client_host}"
+    now = time.time()
+    bucket = _RATE_LIMIT_BUCKETS[key]
+
+    while bucket and bucket[0] <= now - window_seconds:
+        bucket.popleft()
+    if len(bucket) >= limit:
+        raise HTTPException(status_code=429, detail=f"Rate limit exceeded for {scope}")
+    bucket.append(now)
+
+
+def auth_rate_limit(request: Request) -> None:
+    enforce_rate_limit(request, scope="auth", limit=10, window_seconds=60)
+
+
+def mutation_rate_limit(request: Request) -> None:
+    enforce_rate_limit(request, scope="mutation", limit=20, window_seconds=60)

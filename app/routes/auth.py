@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from app.auth import create_session_token, hash_password, verify_password
 from app.repository import create_user, get_user_by_email, list_users
-from app.security import require_admin, require_session
+from app.security import auth_rate_limit, require_admin, require_session
 from app.schemas import LoginRequest, RegisterRequest
 
 
@@ -24,7 +24,12 @@ def _set_session_cookie(request: Request, response: Response, token: str) -> Non
 
 
 @router.post("/register")
-async def register(request: Request, response: Response, payload: RegisterRequest):
+async def register(
+    request: Request,
+    response: Response,
+    payload: RegisterRequest,
+    _: None = Depends(auth_rate_limit),
+):
     existing = get_user_by_email(payload.email)
     if existing is not None:
         raise HTTPException(status_code=409, detail="User already exists")
@@ -38,7 +43,12 @@ async def register(request: Request, response: Response, payload: RegisterReques
 
 
 @router.post("/login")
-async def login(request: Request, response: Response, payload: LoginRequest):
+async def login(
+    request: Request,
+    response: Response,
+    payload: LoginRequest,
+    _: None = Depends(auth_rate_limit),
+):
     user = get_user_by_email(payload.email)
     if user is None or not verify_password(payload.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
