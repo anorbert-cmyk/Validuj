@@ -3,8 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from app.repository import create_run, get_run, user_owns_project, user_owns_run
-from app.security import require_session
+from app.repository import count_runs_for_owner, create_run, get_run, user_owns_project, user_owns_run
+from app.routes.billing import current_subscription
+from app.security import mutation_rate_limit, require_allowed_origin, require_session
 from app.schemas import CreateRunRequest
 from app.seo import demo_structured_data, homepage_structured_data, make_meta, methodology_structured_data
 from app.services.analysis_runner import spawn_analysis
@@ -95,10 +96,20 @@ async def submit_run(
     idea_text: str = Form(...),
     project_public_id: str | None = Form(default=None),
     session=Depends(require_session),
+    _: None = Depends(mutation_rate_limit),
 ):
+    require_allowed_origin(request)
     payload = CreateRunRequest(idea_text=idea_text, project_public_id=project_public_id)
     if payload.project_public_id and not user_owns_project(payload.project_public_id, session["email"]):
         raise HTTPException(status_code=403, detail="Project access denied")
+    subscription = await current_subscription(session)
+    run_limit = int(subscription.get("run_limit", 0))
+    current_count = count_runs_for_owner(session["email"])
+    if current_count >= run_limit:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Run limit reached for plan '{subscription.get('plan_name', 'free')}'.",
+        )
     run_id = create_run(
         payload.idea_text,
         payload.project_public_id,

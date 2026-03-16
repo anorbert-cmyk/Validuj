@@ -76,6 +76,8 @@ async def select_subscription(
     chosen = get_plan_definition(plan_name)
     if chosen is None:
         return {"status": "invalid_plan"}
+    if plan_name != "free" and session["role"] != "admin":
+        return {"status": "payment_required"}
     subscription = upsert_subscription(session["email"], plan_name=plan_name, status="active")
     return subscription.model_dump(mode="json")
 

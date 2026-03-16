@@ -64,7 +64,7 @@ export function SettingsClient() {
                 Mock checkout completed for the <strong>{checkoutPlan}</strong> plan. In development
                 mode you can activate the subscription below without a real card processor.
               </p>
-              {checkoutPlan ? (
+              {checkoutPlan && user?.role === "admin" ? (
                 <button
                   type="button"
                   onClick={() => mutation.mutate(checkoutPlan)}
@@ -72,6 +72,11 @@ export function SettingsClient() {
                 >
                   Activate {checkoutPlan} plan
                 </button>
+              ) : user?.role !== "admin" ? (
+                <p className="text-xs text-cyan-200/80">
+                  Mock entitlement activation is restricted. In production this step would be completed by
+                  the payment provider callback.
+                </p>
               ) : null}
             </div>
           ) : checkoutMode === "success" ? (
@@ -127,10 +132,14 @@ export function SettingsClient() {
                 <button
                   type="button"
                   onClick={() => mutation.mutate(plan.name)}
-                  disabled={!user || mutation.isPending}
+                  disabled={!user || mutation.isPending || (plan.name !== "free" && user.role !== "admin")}
                   className="mt-5 rounded-full border border-cyan-400/30 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:border-cyan-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {subscription?.plan_name === plan.name ? "Current plan" : "Select plan"}
+                  {subscription?.plan_name === plan.name
+                    ? "Current plan"
+                    : plan.name !== "free" && user?.role !== "admin"
+                      ? "Admin override only"
+                      : "Select plan"}
                 </button>
                 {plan.name !== "free" ? (
                   <button

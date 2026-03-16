@@ -21,6 +21,7 @@ class Settings:
     local_model_id: str
     auth_secret: str
     admin_email: str
+    admin_bootstrap_token: str | None
     stripe_secret_key: str | None
     stripe_publishable_key: str | None
     stripe_webhook_secret: str | None
@@ -63,6 +64,7 @@ def get_settings() -> Settings:
         local_model_id=_env("LOCAL_MODEL_ID", "local-synthesis-engine") or "local-synthesis-engine",
         auth_secret=_env("AUTH_SECRET", "validuj-dev-secret") or "validuj-dev-secret",
         admin_email=_env("ADMIN_EMAIL", "admin@validuj.local") or "admin@validuj.local",
+        admin_bootstrap_token=_env("ADMIN_BOOTSTRAP_TOKEN"),
         stripe_secret_key=_env("STRIPE_SECRET_KEY"),
         stripe_publishable_key=_env("STRIPE_PUBLISHABLE_KEY"),
         stripe_webhook_secret=_env("STRIPE_WEBHOOK_SECRET"),

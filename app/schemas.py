@@ -113,6 +113,7 @@ class CreateProjectRequest(BaseModel):
 class RegisterRequest(BaseModel):
     email: str = Field(min_length=5, max_length=255)
     password: str = Field(min_length=8, max_length=128)
+    bootstrap_token: str | None = None
 
 
 class LoginRequest(BaseModel):

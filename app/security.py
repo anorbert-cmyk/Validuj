@@ -69,3 +69,17 @@ def auth_rate_limit(request: Request) -> None:
 
 def mutation_rate_limit(request: Request) -> None:
     enforce_rate_limit(request, scope="mutation", limit=20, window_seconds=60)
+
+
+def require_allowed_origin(request: Request) -> None:
+    origin = request.headers.get("origin")
+    referer = request.headers.get("referer")
+    allowed = {
+        request.app.state.settings.app_base_url.rstrip("/"),
+        request.app.state.settings.frontend_base_url.rstrip("/"),
+    }
+    if origin and origin.rstrip("/") not in allowed:
+        raise HTTPException(status_code=403, detail="Origin not allowed")
+    if referer:
+        if not any(referer.startswith(base) for base in allowed):
+            raise HTTPException(status_code=403, detail="Referer not allowed")

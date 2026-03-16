@@ -43,7 +43,13 @@ async def register(
         raise HTTPException(status_code=409, detail="User already exists")
 
     settings = request.app.state.settings
-    role = "admin" if payload.email.strip().lower() == settings.admin_email.strip().lower() else "user"
+    role = "user"
+    if (
+        payload.email.strip().lower() == settings.admin_email.strip().lower()
+        and settings.admin_bootstrap_token
+        and payload.bootstrap_token == settings.admin_bootstrap_token
+    ):
+        role = "admin"
     create_user(payload.email, hash_password(payload.password), role=role)
     token = create_session_token(settings, email=payload.email.strip().lower(), role=role)
     _set_session_cookie(request, response, token, create_csrf_token())
