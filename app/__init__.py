@@ -1,0 +1,1 @@
+"""Validuj application package."""

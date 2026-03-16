@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-hero">
+  <p class="eyebrow">Private run</p>
+  <h1>Analysis run {{ run.public_id }}</h1>
+  <p class="lead">This page updates live while the six-agent workflow runs. Search engines should not index this page.</p>
+</section>
+
+<section class="panel">
+  <h2>Submitted idea</h2>
+  <p>{{ run.idea_text }}</p>
+  <div class="run-meta">
+    <span><strong>Status:</strong> <span id="run-status">{{ run.status }}</span></span>
+    <span><strong>Current stage:</strong> <span id="run-stage">{{ run.current_stage_name or "Waiting" }}</span></span>
+  </div>
+</section>
+
+<section class="grid-two">
+  <article class="panel">
+    <h2>Event timeline</h2>
+    <ul id="events" class="event-list">
+      {% for event in run.events %}
+      <li>
+        <strong>{{ event.event_type }}</strong>
+        <span>{{ event.payload }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="panel">
+    <h2>Stage summaries</h2>
+    <div id="stages" class="stages">
+      {% for stage in run.stages %}
+      <section class="stage-card" id="stage-{{ stage.stage_index }}">
+        <h3>{{ stage.stage_index }}. {{ stage.stage_name }}</h3>
+        <p><strong>Status:</strong> {{ stage.status }}</p>
+        {% if stage.provider_name %}
+        <p><strong>Provider:</strong> {{ stage.provider_name }} / {{ stage.model_name }}</p>
+        {% endif %}
+        {% if stage.summary %}
+        <p>{{ stage.summary }}</p>
+        {% endif %}
+        {% if stage.markdown %}
+        <pre class="report-block">{{ stage.markdown }}</pre>
+        {% endif %}
+      </section>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+{% if run.final_markdown %}
+<section class="panel">
+  <h2>Final report</h2>
+  <pre class="report-block">{{ run.final_markdown }}</pre>
+</section>
+{% endif %}
+
+<script>
+  window.VALIDUJ_RUN_ID = "{{ run.public_id }}";
+</script>
+{% endblock %}

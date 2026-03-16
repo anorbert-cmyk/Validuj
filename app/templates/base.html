@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ meta.title }}</title>
+    <meta name="description" content="{{ meta.description }}" />
+    <meta name="robots" content="{{ meta.robots }}" />
+    <link rel="canonical" href="{{ meta.canonical_url }}" />
+    <meta property="og:title" content="{{ meta.title }}" />
+    <meta property="og:description" content="{{ meta.description }}" />
+    <meta property="og:type" content="{{ meta.og_type }}" />
+    <meta property="og:url" content="{{ meta.canonical_url }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ meta.title }}" />
+    <meta name="twitter:description" content="{{ meta.description }}" />
+    <link rel="stylesheet" href="/static/app.css" />
+    {% for item in meta.structured_data %}
+    <script type="application/ld+json">{{ item | tojson }}</script>
+    {% endfor %}
+  </head>
+  <body data-page="{{ page_key }}">
+    <header class="site-header">
+      <div class="container header-inner">
+        <a href="/" class="brand">Validuj</a>
+        <nav class="nav">
+          <a href="/how-it-works">How it works</a>
+          <a href="/demo-report">Demo report</a>
+        </nav>
+      </div>
+    </header>
+    <main class="container">{% block content %}{% endblock %}</main>
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>Validuj — six-agent startup validation with SEO-ready reporting.</p>
+      </div>
+    </footer>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
