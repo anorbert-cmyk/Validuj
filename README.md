@@ -19,6 +19,8 @@ It takes a business idea, runs it through **six specialist stages**, passes stru
 - deterministic local fallback for no-key environments
 - live run streaming over Server-Sent Events
 - lightweight project/workspace grouping for dashboard organization
+- authentication foundation with signed session cookies
+- billing/settings foundation with plan-aware run limits
 - persistent reports in SQLite
 - public SEO pages + private `noindex` run pages
 
@@ -99,12 +101,21 @@ Open:
 ### API
 
 - `GET /api/health`
+- `GET /api/billing/plans`
+- `GET /api/billing/subscription`
 - `GET /api/projects`
 - `GET /api/runs`
+- `GET /api/auth/me`
 - `POST /api/projects`
 - `POST /api/runs`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `POST /api/billing/subscription/{plan_name}`
 - `GET /api/admin/overview`
+- `GET /api/auth/admin/users`
 - `GET /api/runs/{run_id}`
+- `GET /api/runs/{run_id}/markdown`
 - `GET /api/stream/runs/{run_id}`
 
 ### Frontend routes
@@ -117,6 +128,7 @@ Open:
 - `/faq`
 - `/dashboard`
 - `/admin`
+- `/settings`
 - `/runs/[run_id]`
 
 ## Example API request

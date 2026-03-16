@@ -113,9 +113,21 @@ Private run page:
 API endpoints:
 
 - `GET /api/health`
+- `GET /api/billing/plans`
+- `GET /api/billing/subscription`
 - `GET /api/runs`
+- `GET /api/projects`
+- `GET /api/auth/me`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
 - `POST /api/runs`
+- `POST /api/projects`
+- `POST /api/billing/subscription/{plan_name}`
+- `GET /api/auth/admin/users`
+- `GET /api/admin/overview`
 - `GET /api/runs/{run_id}`
+- `GET /api/runs/{run_id}/markdown`
 - `GET /api/stream/runs/{run_id}`
 - `GET /robots.txt`
 - `GET /sitemap.xml`
@@ -126,12 +138,18 @@ SQLite is used for reliability and zero external setup.
 
 Tables:
 
+- `users`
+- `projects`
+- `subscriptions`
 - `analysis_runs`
 - `stage_runs`
 - `run_events`
 
 This gives enough structure for:
 
+- authenticated ownership boundaries
+- project grouping
+- starter billing plan tracking
 - rerendering completed runs
 - replaying SSE history
 - inspecting per-stage provider/model choices
@@ -207,15 +225,26 @@ Current frontend responsibilities:
 - dashboard shell
 - lightweight project workspace creation and selection
 - run detail shell with live SSE-backed updates
+- settings shell for account + billing foundation
+- admin overview shell for operational visibility
 
 The frontend talks to the FastAPI backend over HTTP using:
 
+- `GET /api/auth/me`
+- `GET /api/billing/plans`
+- `GET /api/billing/subscription`
 - `GET /api/projects`
 - `GET /api/runs`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
 - `POST /api/projects`
 - `POST /api/runs`
+- `POST /api/billing/subscription/{plan_name}`
 - `GET /api/admin/overview`
+- `GET /api/auth/admin/users`
 - `GET /api/runs/{run_id}`
+- `GET /api/runs/{run_id}/markdown`
 - `GET /api/stream/runs/{run_id}`
 
 This is the first major step away from an all-in-one server-rendered product and toward a split frontend/backend production architecture.
@@ -243,6 +272,8 @@ These pages are:
 ### Non-indexable pages
 
 - `/runs/{run_id}`
+- `/settings`
+- `/admin`
 
 Run pages emit:
 
@@ -268,6 +299,24 @@ If a stage throws an exception:
 - a `run_failed` event is stored and streamed
 
 The system favors clarity over silent retries in this first version.
+
+## Security posture in the current expansion
+
+The expanded product now includes several practical security controls:
+
+- signed session cookies with expiry
+- stronger password hashing than the original fast hash
+- owner-based access control for runs and projects
+- admin-only access for operations endpoints
+- simple in-memory rate limits for auth and mutation routes
+- noindex rules for private pages
+
+This is still not the final production security design, but it closes several high-risk gaps from the earlier prototype:
+
+- public run enumeration
+- cross-user run access
+- unrestricted project attachment
+- unauthenticated admin visibility
 
 ## Why this architecture
 
