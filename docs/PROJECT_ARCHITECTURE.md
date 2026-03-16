@@ -118,6 +118,7 @@ API endpoints:
 - `GET /api/runs`
 - `GET /api/projects`
 - `GET /api/auth/me`
+- `GET /api/auth/sessions`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
@@ -308,6 +309,7 @@ The system favors clarity over silent retries in this first version.
 The expanded product now includes several practical security controls:
 
 - signed session cookies with expiry
+- server-backed session records with revocation
 - stronger password hashing than the original fast hash
 - owner-based access control for runs and projects
 - admin-only access for operations endpoints

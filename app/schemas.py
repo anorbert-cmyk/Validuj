@@ -100,6 +100,16 @@ class SubscriptionRecord(BaseModel):
     updated_at: datetime
 
 
+class SessionRecord(BaseModel):
+    session_id: str
+    email: str
+    role: Literal["user", "admin"]
+    expires_at: datetime
+    revoked_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class CreateRunRequest(BaseModel):
     idea_text: str = Field(min_length=20, max_length=4000)
     project_public_id: str | None = None

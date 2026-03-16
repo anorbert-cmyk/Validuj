@@ -14,6 +14,7 @@ from app.schemas import (
     ProjectSummary,
     RunEvent,
     SearchResultBundle,
+    SessionRecord,
     StageOutput,
     StageRunRecord,
     SubscriptionRecord,
@@ -145,6 +146,82 @@ def upsert_subscription(email: str, plan_name: str, status: str = "active") -> S
             (normalized_email, plan_name, status, now, now),
         )
     return get_subscription(normalized_email)  # type: ignore[return-value]
+
+
+def create_session_record(session_id: str, email: str, role: str, expires_at: str) -> SessionRecord:
+    now = utc_now()
+    normalized_email = email.strip().lower()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO sessions (session_id, email, role, expires_at, revoked_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, NULL, ?, ?)
+            """,
+            (session_id, normalized_email, role, expires_at, now, now),
+        )
+    return get_session_record(session_id)  # type: ignore[return-value]
+
+
+def get_session_record(session_id: str) -> SessionRecord | None:
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT session_id, email, role, expires_at, revoked_at, created_at, updated_at
+            FROM sessions
+            WHERE session_id = ?
+            """,
+            (session_id,),
+        ).fetchone()
+    if row is None:
+        return None
+    return SessionRecord(
+        session_id=row["session_id"],
+        email=row["email"],
+        role=row["role"],
+        expires_at=datetime.fromisoformat(row["expires_at"]),
+        revoked_at=_parse_dt(row["revoked_at"]),
+        created_at=datetime.fromisoformat(row["created_at"]),
+        updated_at=datetime.fromisoformat(row["updated_at"]),
+    )
+
+
+def revoke_session_record(session_id: str) -> None:
+    now = utc_now()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE sessions
+            SET revoked_at = ?, updated_at = ?
+            WHERE session_id = ? AND revoked_at IS NULL
+            """,
+            (now, now, session_id),
+        )
+
+
+def list_sessions_for_email(email: str, limit: int = 20) -> list[SessionRecord]:
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT session_id, email, role, expires_at, revoked_at, created_at, updated_at
+            FROM sessions
+            WHERE email = ?
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (email.strip().lower(), limit),
+        ).fetchall()
+    return [
+        SessionRecord(
+            session_id=row["session_id"],
+            email=row["email"],
+            role=row["role"],
+            expires_at=datetime.fromisoformat(row["expires_at"]),
+            revoked_at=_parse_dt(row["revoked_at"]),
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+        for row in rows
+    ]
 
 
 def create_run(

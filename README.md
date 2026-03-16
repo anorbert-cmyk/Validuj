@@ -107,6 +107,7 @@ Open:
 - `GET /api/projects`
 - `GET /api/runs`
 - `GET /api/auth/me`
+- `GET /api/auth/sessions`
 - `POST /api/projects`
 - `POST /api/runs`
 - `POST /api/auth/register`

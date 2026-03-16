@@ -66,6 +66,16 @@ export type SessionUser = {
   role: "user" | "admin";
 };
 
+export type SessionRecord = {
+  session_id: string;
+  email: string;
+  role: "user" | "admin";
+  expires_at: string;
+  revoked_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type BillingPlan = {
   name: string;
   price: number;
@@ -269,6 +279,20 @@ export async function fetchAdminUsers(): Promise<SessionUser[]> {
   });
   if (!response.ok) {
     throw new Error("Failed to load admin users");
+  }
+  return response.json();
+}
+
+export async function fetchUserSessions(): Promise<SessionRecord[]> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/sessions`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return [];
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load sessions");
   }
   return response.json();
 }

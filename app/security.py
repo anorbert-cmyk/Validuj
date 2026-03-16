@@ -8,9 +8,11 @@ from typing import TypedDict
 from fastapi import Cookie, Header, HTTPException, Request
 
 from app.auth import decode_session_token
+from app.repository import get_session_record
 
 
 class SessionUser(TypedDict):
+    sid: str
     email: str
     role: str
 
@@ -27,7 +29,12 @@ def require_session(
     session = decode_session_token(request.app.state.settings, validuj_session)
     if session is None:
         raise HTTPException(status_code=401, detail="Invalid session")
-    return session
+    stored = get_session_record(session["sid"])
+    if stored is None or stored.revoked_at is not None:
+        raise HTTPException(status_code=401, detail="Session revoked")
+    if stored.expires_at.timestamp() < time.time():
+        raise HTTPException(status_code=401, detail="Session expired")
+    return {"sid": stored.session_id, "email": stored.email, "role": stored.role}
 
 
 def require_admin(

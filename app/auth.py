@@ -51,8 +51,24 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_session_token(settings: Settings, *, email: str, role: str) -> str:
+    return create_session_token_with_id(
+        settings,
+        session_id=secrets.token_urlsafe(18),
+        email=email,
+        role=role,
+    )
+
+
+def create_session_token_with_id(
+    settings: Settings,
+    *,
+    session_id: str,
+    email: str,
+    role: str,
+) -> str:
     payload = json.dumps(
         {
+            "sid": session_id,
             "email": email,
             "role": role,
             "exp": int(time.time()) + SESSION_TTL_SECONDS,
@@ -92,12 +108,18 @@ def decode_session_token(settings: Settings, token: str) -> dict[str, str] | Non
         return None
     email = data.get("email")
     role = data.get("role")
+    session_id = data.get("sid")
     exp = data.get("exp")
-    if not isinstance(email, str) or not isinstance(role, str) or not isinstance(exp, int):
+    if (
+        not isinstance(email, str)
+        or not isinstance(role, str)
+        or not isinstance(session_id, str)
+        or not isinstance(exp, int)
+    ):
         return None
     if exp < int(time.time()):
         return None
-    return {"email": email, "role": role}
+    return {"sid": session_id, "email": email, "role": role}
 
 
 def _pad(value: str) -> bytes:

@@ -2,8 +2,23 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
-from app.auth import create_csrf_token, create_session_token, hash_password, verify_password
-from app.repository import create_user, get_user_by_email, list_users
+from datetime import datetime, timedelta, timezone
+
+from app.auth import (
+    SESSION_TTL_SECONDS,
+    create_csrf_token,
+    create_session_token_with_id,
+    hash_password,
+    verify_password,
+)
+from app.repository import (
+    create_session_record,
+    create_user,
+    get_user_by_email,
+    list_sessions_for_email,
+    list_users,
+    revoke_session_record,
+)
 from app.security import auth_rate_limit, require_admin, require_csrf, require_session
 from app.schemas import LoginRequest, RegisterRequest
 
@@ -51,7 +66,15 @@ async def register(
     ):
         role = "admin"
     create_user(payload.email, hash_password(payload.password), role=role)
-    token = create_session_token(settings, email=payload.email.strip().lower(), role=role)
+    session_id = create_csrf_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=SESSION_TTL_SECONDS)
+    create_session_record(session_id, payload.email.strip().lower(), role, expires_at.isoformat())
+    token = create_session_token_with_id(
+        settings,
+        session_id=session_id,
+        email=payload.email.strip().lower(),
+        role=role,
+    )
     _set_session_cookie(request, response, token, create_csrf_token())
     return {"email": payload.email.strip().lower(), "role": role}
 
@@ -68,13 +91,22 @@ async def login(
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     settings = request.app.state.settings
-    token = create_session_token(settings, email=user["email"], role=user["role"])
+    session_id = create_csrf_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=SESSION_TTL_SECONDS)
+    create_session_record(session_id, user["email"], user["role"], expires_at.isoformat())
+    token = create_session_token_with_id(
+        settings,
+        session_id=session_id,
+        email=user["email"],
+        role=user["role"],
+    )
     _set_session_cookie(request, response, token, create_csrf_token())
     return {"email": user["email"], "role": user["role"]}
 
 
 @router.post("/logout")
-async def logout(response: Response, _: None = Depends(require_csrf)):
+async def logout(response: Response, session=Depends(require_session), _: None = Depends(require_csrf)):
+    revoke_session_record(session["sid"])
     response.delete_cookie("validuj_session")
     response.delete_cookie("validuj_csrf")
     return {"status": "logged_out"}
@@ -88,3 +120,8 @@ async def me(session=Depends(require_session)):
 @router.get("/admin/users")
 async def admin_users(session=Depends(require_admin)):
     return [user.model_dump(mode="json") for user in list_users()]
+
+
+@router.get("/sessions")
+async def sessions(session=Depends(require_session)):
+    return [record.model_dump(mode="json") for record in list_sessions_for_email(session["email"])]

@@ -8,6 +8,7 @@ import {
   fetchBillingPlans,
   fetchCurrentSubscription,
   fetchSessionUser,
+  fetchUserSessions,
   selectSubscription,
 } from "@/lib/api";
 
@@ -25,6 +26,10 @@ export function SettingsClient() {
   const { data: subscription } = useQuery({
     queryKey: ["subscription"],
     queryFn: fetchCurrentSubscription,
+  });
+  const { data: sessions = [] } = useQuery({
+    queryKey: ["sessions"],
+    queryFn: fetchUserSessions,
   });
 
   const mutation = useMutation({
@@ -110,6 +115,24 @@ export function SettingsClient() {
               <span className="text-slate-500">Run limit:</span>{" "}
               {subscription?.run_limit ?? 1}
             </p>
+          </div>
+          <div className="mt-6 space-y-3">
+            <p className="text-xs uppercase tracking-[0.18em] text-cyan-200">Active session history</p>
+            {sessions.length === 0 ? (
+              <p className="text-xs text-slate-500">No active session history available.</p>
+            ) : (
+              sessions.slice(0, 4).map((session) => (
+                <div
+                  key={session.session_id}
+                  className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-xs text-slate-300"
+                >
+                  <p>{new Date(session.created_at).toLocaleString()}</p>
+                  <p className="mt-1 text-slate-500">
+                    Expires {new Date(session.expires_at).toLocaleString()}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         </article>
 
