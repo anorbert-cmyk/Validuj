@@ -48,6 +48,9 @@ export default function RootLayout({
                   <Link href="/pricing" className="transition hover:text-white">
                     Pricing
                   </Link>
+                  <Link href="/compare" className="transition hover:text-white">
+                    Compare
+                  </Link>
                   <Link href="/demo-report" className="transition hover:text-white">
                     Demo report
                   </Link>

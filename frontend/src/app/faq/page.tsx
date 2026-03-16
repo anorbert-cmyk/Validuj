@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -26,6 +27,24 @@ const faqs = [
 export default function FaqPage() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-16">
+      <Script
+        id="faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: faqs.map((item) => ({
+              "@type": "Question",
+              name: item.question,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: item.answer,
+              },
+            })),
+          }),
+        }}
+      />
       <section className="space-y-5">
         <p className="text-sm uppercase tracking-[0.24em] text-cyan-200">FAQ</p>
         <h1 className="text-5xl font-semibold tracking-tight text-white">Frequently asked questions</h1>
