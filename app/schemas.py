@@ -62,6 +62,15 @@ class AnalysisRunRecord(BaseModel):
     events: list[RunEvent] = Field(default_factory=list)
 
 
+class AnalysisRunSummary(BaseModel):
+    public_id: str
+    idea_text: str
+    status: RunStatus
+    current_stage_name: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class CreateRunRequest(BaseModel):
     idea_text: str = Field(min_length=20, max_length=4000)
 

@@ -6,7 +6,15 @@ from typing import Any
 from uuid import uuid4
 
 from app.db import get_connection
-from app.schemas import AnalysisRunRecord, Citation, RunEvent, SearchResultBundle, StageOutput, StageRunRecord
+from app.schemas import (
+    AnalysisRunRecord,
+    AnalysisRunSummary,
+    Citation,
+    RunEvent,
+    SearchResultBundle,
+    StageOutput,
+    StageRunRecord,
+)
 
 
 def utc_now() -> str:
@@ -251,3 +259,27 @@ def get_run(run_public_id: str) -> AnalysisRunRecord | None:
 
 def get_public_sitemap_runs() -> list[str]:
     return []
+
+
+def list_runs(limit: int = 20) -> list[AnalysisRunSummary]:
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT public_id, idea_text, status, current_stage_name, created_at, updated_at
+            FROM analysis_runs
+            ORDER BY updated_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [
+        AnalysisRunSummary(
+            public_id=row["public_id"],
+            idea_text=row["idea_text"],
+            status=row["status"],
+            current_stage_name=row["current_stage_name"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+        for row in rows
+    ]

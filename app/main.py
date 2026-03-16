@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -20,6 +21,17 @@ def create_app() -> FastAPI:
     ensure_database()
 
     app = FastAPI(title=settings.app_name)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://127.0.0.1:3000",
+            "http://localhost:3000",
+            settings.app_base_url,
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.mount("/static", StaticFiles(directory="/workspace/app/static"), name="static")
 
     templates = Jinja2Templates(directory="/workspace/app/templates")
