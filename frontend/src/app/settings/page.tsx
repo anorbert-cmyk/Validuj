@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { SettingsClient } from "@/components/settings-client";
 
@@ -12,5 +13,15 @@ export const metadata: Metadata = {
 };
 
 export default function SettingsPage() {
-  return <SettingsClient />;
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-16 text-sm text-slate-300">
+          Loading settings...
+        </div>
+      }
+    >
+      <SettingsClient />
+    </Suspense>
+  );
 }
