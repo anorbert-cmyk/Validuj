@@ -60,6 +60,9 @@ export default function RootLayout({
                   >
                     Dashboard
                   </Link>
+                  <Link href="/settings" className="transition hover:text-white">
+                    Settings
+                  </Link>
                   <Link href="/admin" className="transition hover:text-white">
                     Admin
                   </Link>

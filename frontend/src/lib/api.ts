@@ -49,6 +49,21 @@ export type SessionUser = {
   role: "user" | "admin";
 };
 
+export type BillingPlan = {
+  name: string;
+  price: number;
+  currency: string;
+  description: string;
+};
+
+export type SubscriptionRecord = {
+  email: string;
+  plan_name: string;
+  status: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type AdminOverview = {
   total_runs: number;
   status_totals: Record<string, number>;
@@ -200,6 +215,41 @@ export async function fetchSessionUser(): Promise<SessionUser | null> {
   }
   if (!response.ok) {
     throw new Error("Failed to load session");
+  }
+  return response.json();
+}
+
+export async function fetchBillingPlans(): Promise<BillingPlan[]> {
+  const response = await fetch(`${API_BASE_URL}/api/billing/plans`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load billing plans");
+  }
+  return response.json();
+}
+
+export async function fetchCurrentSubscription(): Promise<SubscriptionRecord | null> {
+  const response = await fetch(`${API_BASE_URL}/api/billing/subscription`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load subscription");
+  }
+  return response.json();
+}
+
+export async function selectSubscription(planName: string): Promise<SubscriptionRecord> {
+  const response = await fetch(`${API_BASE_URL}/api/billing/subscription/${planName}`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update subscription");
   }
   return response.json();
 }

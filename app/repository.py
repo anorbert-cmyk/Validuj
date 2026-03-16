@@ -16,6 +16,7 @@ from app.schemas import (
     SearchResultBundle,
     StageOutput,
     StageRunRecord,
+    SubscriptionRecord,
     UserSummary,
 )
 
@@ -104,6 +105,46 @@ def list_users(limit: int = 50) -> list[UserSummary]:
         )
         for row in rows
     ]
+
+
+def get_subscription(email: str) -> SubscriptionRecord | None:
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT email, plan_name, status, created_at, updated_at
+            FROM subscriptions
+            WHERE email = ?
+            """,
+            (email.strip().lower(),),
+        ).fetchone()
+    if row is None:
+        return None
+    return SubscriptionRecord(
+        email=row["email"],
+        plan_name=row["plan_name"],
+        status=row["status"],
+        created_at=datetime.fromisoformat(row["created_at"]),
+        updated_at=datetime.fromisoformat(row["updated_at"]),
+    )
+
+
+def upsert_subscription(email: str, plan_name: str, status: str = "active") -> SubscriptionRecord:
+    now = utc_now()
+    normalized_email = email.strip().lower()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO subscriptions (email, plan_name, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(email)
+            DO UPDATE SET
+              plan_name = excluded.plan_name,
+              status = excluded.status,
+              updated_at = excluded.updated_at
+            """,
+            (normalized_email, plan_name, status, now, now),
+        )
+    return get_subscription(normalized_email)  # type: ignore[return-value]
 
 
 def create_run(

@@ -92,6 +92,14 @@ class UserSummary(BaseModel):
     updated_at: datetime
 
 
+class SubscriptionRecord(BaseModel):
+    email: str
+    plan_name: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class CreateRunRequest(BaseModel):
     idea_text: str = Field(min_length=20, max_length=4000)
     project_public_id: str | None = None
