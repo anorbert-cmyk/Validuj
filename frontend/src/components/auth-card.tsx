@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { loginUser, registerUser, type SessionUser } from "@/lib/api";
@@ -15,6 +16,7 @@ export function AuthCard({ initialUser }: AuthCardProps) {
   const [mode, setMode] = useState<"login" | "register">("register");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,6 +27,7 @@ export function AuthCard({ initialUser }: AuthCardProps) {
       const nextUser =
         mode === "register" ? await registerUser(payload) : await loginUser(payload);
       setUser(nextUser);
+      queryClient.invalidateQueries();
       setEmail("");
       setPassword("");
     } catch (submissionError) {
