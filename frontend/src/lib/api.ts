@@ -1,6 +1,15 @@
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
+function csrfHeaders(): HeadersInit {
+  if (typeof document === "undefined") {
+    return {};
+  }
+  const match = document.cookie.match(/(?:^|;\s*)validuj_csrf=([^;]+)/);
+  const token = match ? decodeURIComponent(match[1]) : "";
+  return token ? { "X-Validuj-Csrf": token } : {};
+}
+
 export type RunSummary = {
   project_public_id: string | null;
   public_id: string;
@@ -130,6 +139,7 @@ export async function createRun(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...csrfHeaders(),
     },
     credentials: "include",
     body: JSON.stringify({
@@ -177,6 +187,7 @@ export async function createProject(payload: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...csrfHeaders(),
     },
     credentials: "include",
     body: JSON.stringify(payload),
@@ -196,6 +207,7 @@ export async function registerUser(payload: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...csrfHeaders(),
     },
     credentials: "include",
     body: JSON.stringify(payload),
@@ -214,6 +226,7 @@ export async function loginUser(payload: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...csrfHeaders(),
     },
     credentials: "include",
     body: JSON.stringify(payload),
@@ -242,6 +255,7 @@ export async function logoutUser(): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
     method: "POST",
     credentials: "include",
+    headers: csrfHeaders(),
   });
   if (!response.ok) {
     throw new Error("Failed to log out");
@@ -287,6 +301,7 @@ export async function selectSubscription(planName: string): Promise<Subscription
   const response = await fetch(`${API_BASE_URL}/api/billing/subscription/${planName}`, {
     method: "POST",
     credentials: "include",
+    headers: csrfHeaders(),
   });
   if (!response.ok) {
     throw new Error("Failed to update subscription");
@@ -298,6 +313,7 @@ export async function createCheckout(planName: string): Promise<CheckoutDestinat
   const response = await fetch(`${API_BASE_URL}/api/billing/checkout/${planName}`, {
     method: "POST",
     credentials: "include",
+    headers: csrfHeaders(),
   });
   if (!response.ok) {
     throw new Error("Failed to create checkout");

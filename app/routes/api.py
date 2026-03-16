@@ -15,7 +15,7 @@ from app.repository import (
     user_owns_run,
 )
 from app.routes.billing import current_subscription
-from app.security import mutation_rate_limit, require_admin, require_session
+from app.security import mutation_rate_limit, require_admin, require_csrf, require_session
 from app.schemas import CreateProjectRequest, CreateRunRequest
 from app.services.analysis_runner import spawn_analysis
 
@@ -33,6 +33,7 @@ async def create_run_api(
     request: Request,
     payload: CreateRunRequest,
     session=Depends(require_session),
+    __: None = Depends(require_csrf),
     _: None = Depends(mutation_rate_limit),
 ):
     if payload.project_public_id and not user_owns_project(payload.project_public_id, session["email"]):
@@ -64,6 +65,7 @@ async def create_project_api(
     request: Request,
     payload: CreateProjectRequest,
     session=Depends(require_session),
+    __: None = Depends(require_csrf),
     _: None = Depends(mutation_rate_limit),
 ):
     project_id = create_project(payload, owner_email=session["email"])

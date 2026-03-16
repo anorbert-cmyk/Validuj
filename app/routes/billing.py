@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 
 from app.payments import create_checkout_destination
 from app.repository import get_subscription, upsert_subscription
-from app.security import require_session
+from app.security import require_csrf, require_session
 
 
 router = APIRouter(prefix="/api/billing")
@@ -68,7 +68,11 @@ async def current_subscription(session=Depends(require_session)):
 
 
 @router.post("/subscription/{plan_name}")
-async def select_subscription(plan_name: str, session=Depends(require_session)):
+async def select_subscription(
+    plan_name: str,
+    session=Depends(require_session),
+    _: None = Depends(require_csrf),
+):
     chosen = get_plan_definition(plan_name)
     if chosen is None:
         return {"status": "invalid_plan"}
@@ -77,7 +81,12 @@ async def select_subscription(plan_name: str, session=Depends(require_session)):
 
 
 @router.post("/checkout/{plan_name}")
-async def create_checkout(request: Request, plan_name: str, session=Depends(require_session)):
+async def create_checkout(
+    request: Request,
+    plan_name: str,
+    session=Depends(require_session),
+    _: None = Depends(require_csrf),
+):
     chosen = get_plan_definition(plan_name)
     if chosen is None or plan_name == "free":
         return {"status": "invalid_plan"}

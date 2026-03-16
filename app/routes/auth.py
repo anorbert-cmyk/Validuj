@@ -2,21 +2,29 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
-from app.auth import create_session_token, hash_password, verify_password
+from app.auth import create_csrf_token, create_session_token, hash_password, verify_password
 from app.repository import create_user, get_user_by_email, list_users
-from app.security import auth_rate_limit, require_admin, require_session
+from app.security import auth_rate_limit, require_admin, require_csrf, require_session
 from app.schemas import LoginRequest, RegisterRequest
 
 
 router = APIRouter(prefix="/api/auth")
 
 
-def _set_session_cookie(request: Request, response: Response, token: str) -> None:
+def _set_session_cookie(request: Request, response: Response, token: str, csrf_token: str) -> None:
     secure = request.app.state.settings.app_env == "production"
     response.set_cookie(
         "validuj_session",
         token,
         httponly=True,
+        samesite="lax",
+        secure=secure,
+        max_age=60 * 60 * 24 * 7,
+    )
+    response.set_cookie(
+        "validuj_csrf",
+        csrf_token,
+        httponly=False,
         samesite="lax",
         secure=secure,
         max_age=60 * 60 * 24 * 7,
@@ -38,7 +46,7 @@ async def register(
     role = "admin" if payload.email.strip().lower() == settings.admin_email.strip().lower() else "user"
     create_user(payload.email, hash_password(payload.password), role=role)
     token = create_session_token(settings, email=payload.email.strip().lower(), role=role)
-    _set_session_cookie(request, response, token)
+    _set_session_cookie(request, response, token, create_csrf_token())
     return {"email": payload.email.strip().lower(), "role": role}
 
 
@@ -55,13 +63,14 @@ async def login(
 
     settings = request.app.state.settings
     token = create_session_token(settings, email=user["email"], role=user["role"])
-    _set_session_cookie(request, response, token)
+    _set_session_cookie(request, response, token, create_csrf_token())
     return {"email": user["email"], "role": user["role"]}
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(response: Response, _: None = Depends(require_csrf)):
     response.delete_cookie("validuj_session")
+    response.delete_cookie("validuj_csrf")
     return {"status": "logged_out"}
 
 

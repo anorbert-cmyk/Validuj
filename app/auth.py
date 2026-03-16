@@ -68,6 +68,10 @@ def create_session_token(settings: Settings, *, email: str, role: str) -> str:
     )
 
 
+def create_csrf_token() -> str:
+    return secrets.token_urlsafe(24)
+
+
 def decode_session_token(settings: Settings, token: str) -> dict[str, str] | None:
     try:
         payload_part, signature_part = token.split(".", 1)

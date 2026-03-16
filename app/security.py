@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import hmac
 import time
 from collections import defaultdict, deque
 from typing import TypedDict
 
-from fastapi import Cookie, HTTPException, Request
+from fastapi import Cookie, Header, HTTPException, Request
 
 from app.auth import decode_session_token
 
@@ -37,6 +38,16 @@ def require_admin(
     if session["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return session
+
+
+def require_csrf(
+    validuj_csrf: str | None = Cookie(default=None),
+    x_validuj_csrf: str | None = Header(default=None),
+) -> None:
+    if not validuj_csrf or not x_validuj_csrf:
+        raise HTTPException(status_code=403, detail="Missing CSRF token")
+    if not hmac.compare_digest(validuj_csrf, x_validuj_csrf):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
 
 
 def enforce_rate_limit(request: Request, *, scope: str, limit: int, window_seconds: int) -> None:
