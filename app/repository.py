@@ -16,6 +16,7 @@ from app.schemas import (
     SearchResultBundle,
     StageOutput,
     StageRunRecord,
+    UserSummary,
 )
 
 
@@ -41,6 +42,61 @@ def create_project(payload: CreateProjectRequest) -> str:
             (public_id, payload.name.strip(), (payload.description or "").strip() or None, now, now),
         )
     return public_id
+
+
+def create_user(email: str, password_hash: str, role: str = "user") -> None:
+    now = utc_now()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO users (email, password_hash, role, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (email.strip().lower(), password_hash, role, now, now),
+        )
+
+
+def get_user_by_email(email: str) -> dict[str, Any] | None:
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT email, password_hash, role, created_at, updated_at
+            FROM users
+            WHERE email = ?
+            """,
+            (email.strip().lower(),),
+        ).fetchone()
+    if row is None:
+        return None
+    return {
+        "email": row["email"],
+        "password_hash": row["password_hash"],
+        "role": row["role"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
+
+
+def list_users(limit: int = 50) -> list[UserSummary]:
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT email, role, created_at, updated_at
+            FROM users
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [
+        UserSummary(
+            email=row["email"],
+            role=row["role"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+        for row in rows
+    ]
 
 
 def create_run(idea_text: str, project_public_id: str | None = None) -> str:

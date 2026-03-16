@@ -18,6 +18,8 @@ class Settings:
     openrouter_design_model: str
     tavily_api_key: str | None
     local_model_id: str
+    auth_secret: str
+    admin_email: str
 
     @property
     def has_openrouter(self) -> bool:
@@ -54,4 +56,6 @@ def get_settings() -> Settings:
         or "openai/gpt-4.1",
         tavily_api_key=_env("TAVILY_API_KEY"),
         local_model_id=_env("LOCAL_MODEL_ID", "local-synthesis-engine") or "local-synthesis-engine",
+        auth_secret=_env("AUTH_SECRET", "validuj-dev-secret") or "validuj-dev-secret",
+        admin_email=_env("ADMIN_EMAIL", "admin@validuj.local") or "admin@validuj.local",
     )

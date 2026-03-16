@@ -44,6 +44,11 @@ export type ProjectSummary = {
   run_count: number;
 };
 
+export type SessionUser = {
+  email: string;
+  role: "user" | "admin";
+};
+
 export type AdminOverview = {
   total_runs: number;
   status_totals: Record<string, number>;
@@ -133,6 +138,56 @@ export async function createProject(payload: {
   });
   if (!response.ok) {
     throw new Error("Failed to create project");
+  }
+  return response.json();
+}
+
+export async function registerUser(payload: {
+  email: string;
+  password: string;
+}): Promise<SessionUser> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to register user");
+  }
+  return response.json();
+}
+
+export async function loginUser(payload: {
+  email: string;
+  password: string;
+}): Promise<SessionUser> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to log in");
+  }
+  return response.json();
+}
+
+export async function fetchSessionUser(): Promise<SessionUser | null> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load session");
   }
   return response.json();
 }

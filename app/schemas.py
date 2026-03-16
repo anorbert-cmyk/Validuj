@@ -82,6 +82,13 @@ class ProjectSummary(BaseModel):
     run_count: int = 0
 
 
+class UserSummary(BaseModel):
+    email: str
+    role: Literal["user", "admin"]
+    created_at: datetime
+    updated_at: datetime
+
+
 class CreateRunRequest(BaseModel):
     idea_text: str = Field(min_length=20, max_length=4000)
     project_public_id: str | None = None
@@ -90,6 +97,16 @@ class CreateRunRequest(BaseModel):
 class CreateProjectRequest(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     description: str | None = Field(default=None, max_length=400)
+
+
+class RegisterRequest(BaseModel):
+    email: str = Field(min_length=5, max_length=255)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(min_length=5, max_length=255)
+    password: str = Field(min_length=8, max_length=128)
 
 
 class ProviderResponse(BaseModel):
