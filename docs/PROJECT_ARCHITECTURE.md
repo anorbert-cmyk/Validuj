@@ -123,6 +123,7 @@ API endpoints:
 - `POST /api/auth/logout`
 - `POST /api/runs`
 - `POST /api/projects`
+- `POST /api/billing/checkout/{plan_name}`
 - `POST /api/billing/subscription/{plan_name}`
 - `GET /api/auth/admin/users`
 - `GET /api/admin/overview`
@@ -227,6 +228,7 @@ Current frontend responsibilities:
 - run detail shell with live SSE-backed updates
 - settings shell for account + billing foundation
 - admin overview shell for operational visibility
+- pricing shell backed by live billing-plan data
 
 The frontend talks to the FastAPI backend over HTTP using:
 
@@ -240,6 +242,7 @@ The frontend talks to the FastAPI backend over HTTP using:
 - `POST /api/auth/logout`
 - `POST /api/projects`
 - `POST /api/runs`
+- `POST /api/billing/checkout/{plan_name}`
 - `POST /api/billing/subscription/{plan_name}`
 - `GET /api/admin/overview`
 - `GET /api/auth/admin/users`
@@ -309,6 +312,7 @@ The expanded product now includes several practical security controls:
 - owner-based access control for runs and projects
 - admin-only access for operations endpoints
 - simple in-memory rate limits for auth and mutation routes
+- CSRF protection on authenticated mutations via double-submit token
 - noindex rules for private pages
 
 This is still not the final production security design, but it closes several high-risk gaps from the earlier prototype:
@@ -317,6 +321,7 @@ This is still not the final production security design, but it closes several hi
 - cross-user run access
 - unrestricted project attachment
 - unauthenticated admin visibility
+- missing CSRF on authenticated POST routes
 
 ## Why this architecture
 

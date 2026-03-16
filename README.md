@@ -66,6 +66,7 @@ Copy `.env.example` values into your shell environment if you want to use:
 
 - OpenRouter remote models
 - Tavily search
+- Stripe checkout
 
 Without any keys, the app still works using the local synthesis engine and DuckDuckGo fallback.
 
@@ -111,6 +112,7 @@ Open:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
+- `POST /api/billing/checkout/{plan_name}`
 - `POST /api/billing/subscription/{plan_name}`
 - `GET /api/admin/overview`
 - `GET /api/auth/admin/users`
@@ -173,8 +175,20 @@ If `OPENROUTER_API_KEY` is present, the app can route:
 
 If no remote model is configured, the app uses a deterministic local synthesis engine. This keeps the app fully runnable and testable in development while preserving the same stage-by-stage orchestration.
 
+## Billing foundation
+
+The platform now includes:
+
+- plan catalog
+- subscription state
+- run-limit enforcement by plan
+- mock-or-Stripe checkout destination generation
+
+If Stripe keys are not configured, checkout still works in development by redirecting into a mock local flow.
+
 ## Architecture doc
 
 See:
 
 - `docs/PROJECT_ARCHITECTURE.md`
+- `docs/BILLING_FOUNDATION.md`
