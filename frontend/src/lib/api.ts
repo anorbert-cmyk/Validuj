@@ -76,6 +76,10 @@ export async function fetchRun(runId: string): Promise<RunRecord> {
   return response.json();
 }
 
+export function getRunMarkdownDownloadUrl(runId: string): string {
+  return `${API_BASE_URL}/api/runs/${runId}/markdown`;
+}
+
 export async function createRun(
   ideaText: string,
   projectPublicId?: string,

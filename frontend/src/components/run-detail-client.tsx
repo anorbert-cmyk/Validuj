@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { API_BASE_URL, fetchRun, type RunEvent, type RunRecord } from "@/lib/api";
+import {
+  API_BASE_URL,
+  fetchRun,
+  getRunMarkdownDownloadUrl,
+  type RunEvent,
+  type RunRecord,
+} from "@/lib/api";
 
 type RunDetailClientProps = {
   initialRun: RunRecord;
@@ -86,6 +92,20 @@ export function RunDetailClient({ initialRun }: RunDetailClientProps) {
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Latest event</p>
             <p className="mt-2 text-sm text-white">{latestEvent?.event_type ?? "run_created"}</p>
           </div>
+        </div>
+        <div className="mt-6 flex flex-wrap gap-4">
+          <a
+            href={getRunMarkdownDownloadUrl(run.public_id)}
+            className="rounded-full border border-cyan-400/30 px-5 py-2 text-sm font-medium text-cyan-200 transition hover:border-cyan-300 hover:text-white"
+          >
+            Export markdown
+          </a>
+          <a
+            href="/dashboard"
+            className="rounded-full border border-white/10 px-5 py-2 text-sm font-medium text-slate-200 transition hover:border-white/30 hover:bg-white/5"
+          >
+            Back to dashboard
+          </a>
         </div>
       </section>
 

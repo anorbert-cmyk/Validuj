@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import PlainTextResponse
 
 from app.repository import create_project, create_run, get_admin_overview, get_run, list_projects, list_runs
 from app.schemas import CreateProjectRequest, CreateRunRequest
@@ -49,3 +50,19 @@ async def get_run_api(run_id: str):
     if run is None:
         raise HTTPException(status_code=404, detail="Run not found")
     return run.model_dump(mode="json")
+
+
+@router.get("/runs/{run_id}/markdown", response_class=PlainTextResponse)
+async def get_run_markdown_api(run_id: str):
+    run = get_run(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    if not run.final_markdown:
+        raise HTTPException(status_code=409, detail="Run is not complete yet")
+    return PlainTextResponse(
+        content=run.final_markdown,
+        media_type="text/markdown",
+        headers={
+            "Content-Disposition": f'attachment; filename="{run_id}.md"',
+        },
+    )
