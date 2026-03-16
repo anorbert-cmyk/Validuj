@@ -15,6 +15,10 @@ def create_checkout_destination(settings: Settings, *, plan_name: str, email: st
             success_url=f"{settings.frontend_base_url}/settings?checkout=success&plan={plan_name}",
             cancel_url=f"{settings.frontend_base_url}/pricing?checkout=cancelled",
             customer_email=email,
+            metadata={
+                "plan_name": plan_name,
+                "email": email,
+            },
             line_items=[
                 {
                     "price_data": {
@@ -48,3 +52,10 @@ def _plan_amount(plan_name: str) -> int:
         "studio": 49900,
     }
     return mapping.get(plan_name, 0)
+
+
+def verify_stripe_webhook(settings: Settings, payload: bytes, signature: str):
+    stripe.api_key = settings.stripe_secret_key
+    if not settings.stripe_webhook_secret:
+        raise ValueError("Missing Stripe webhook secret")
+    return stripe.Webhook.construct_event(payload, signature, settings.stripe_webhook_secret)

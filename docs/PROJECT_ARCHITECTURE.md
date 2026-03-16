@@ -126,6 +126,7 @@ API endpoints:
 - `POST /api/projects`
 - `POST /api/billing/checkout/{plan_name}`
 - `POST /api/billing/subscription/{plan_name}`
+- `POST /api/webhooks/stripe`
 - `GET /api/auth/admin/users`
 - `GET /api/admin/overview`
 - `GET /api/runs/{run_id}`
@@ -143,6 +144,7 @@ Tables:
 - `users`
 - `projects`
 - `subscriptions`
+- `billing_events`
 - `analysis_runs`
 - `stage_runs`
 - `run_events`
@@ -152,6 +154,7 @@ This gives enough structure for:
 - authenticated ownership boundaries
 - project grouping
 - starter billing plan tracking
+- billing event capture
 - rerendering completed runs
 - replaying SSE history
 - inspecting per-stage provider/model choices

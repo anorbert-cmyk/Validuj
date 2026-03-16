@@ -12,6 +12,7 @@ from app.routes.auth import router as auth_router
 from app.routes.billing import router as billing_router
 from app.routes.seo import router as seo_router
 from app.routes.stream import router as stream_router
+from app.routes.webhooks import router as webhooks_router
 from app.routes.web import router as web_router
 from app.services.analysis_runner import AnalysisRunner
 from app.services.model_router import ModelRouter
@@ -49,6 +50,7 @@ def create_app() -> FastAPI:
     app.include_router(api_router)
     app.include_router(auth_router)
     app.include_router(billing_router)
+    app.include_router(webhooks_router)
     app.include_router(stream_router)
     return app
 

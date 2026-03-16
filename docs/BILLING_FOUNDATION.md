@@ -26,6 +26,7 @@ This is not yet a full production payment integration, but it is intentionally s
 - `GET /api/billing/subscription`
 - `POST /api/billing/subscription/{plan_name}`
 - `POST /api/billing/checkout/{plan_name}`
+- `POST /api/webhooks/stripe`
 
 ## Current behavior
 
@@ -65,6 +66,23 @@ Used when these values are configured:
 - `STRIPE_PUBLISHABLE_KEY`
 
 Then the backend creates a Stripe Checkout Session and returns its URL.
+
+## Webhook handling
+
+The backend now includes a Stripe webhook endpoint:
+
+- `POST /api/webhooks/stripe`
+
+Behavior:
+
+- verifies Stripe signature when Stripe env vars are configured
+- records billing events into local persistence
+- on `checkout.session.completed`, reads metadata and upgrades the matching subscription
+
+Current expectation:
+
+- the checkout session includes `plan_name` and `email` in metadata
+- webhook reconciliation becomes the authoritative upgrade path once real Stripe is active
 
 ## Environment variables
 

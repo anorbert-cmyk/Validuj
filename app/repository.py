@@ -647,3 +647,21 @@ def count_runs_for_owner(owner_email: str) -> int:
             (owner_email.strip().lower(),),
         ).fetchone()
     return int(row["total"]) if row is not None else 0
+
+
+def record_billing_event(
+    *,
+    provider: str,
+    event_type: str,
+    reference_id: str | None,
+    payload: dict[str, Any],
+) -> None:
+    now = utc_now()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO billing_events (provider, event_type, reference_id, payload_json, processed_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (provider, event_type, reference_id, json.dumps(payload), now),
+        )

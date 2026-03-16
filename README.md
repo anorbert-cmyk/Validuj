@@ -115,6 +115,7 @@ Open:
 - `POST /api/auth/logout`
 - `POST /api/billing/checkout/{plan_name}`
 - `POST /api/billing/subscription/{plan_name}`
+- `POST /api/webhooks/stripe`
 - `GET /api/admin/overview`
 - `GET /api/auth/admin/users`
 - `GET /api/runs/{run_id}`
