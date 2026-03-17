@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">AI startup validation</p>
+    <h1>Validate business ideas with six specialist agents that actually hand work to each other.</h1>
+    <p class="lead">
+      Validuj runs a sequential expert workflow: market research, competition, strategy, product design,
+      edge-case review, and final risk analysis. Each stage passes structured knowledge forward instead of
+      repeating the whole conversation.
+    </p>
+    <div class="hero-actions">
+      <a class="button primary" href="#launch-form">Start an analysis</a>
+      <a class="button secondary" href="/demo-report">See a demo report</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <h2>Why this architecture works</h2>
+    <ul>
+      <li>Six explicit specialist stages</li>
+      <li>Structured handoff between agents</li>
+      <li>Live research in early stages</li>
+      <li>Model routing with local fallback</li>
+      <li>Streaming progress and persistent reports</li>
+    </ul>
+  </div>
+</section>
+
+<section class="grid-two">
+  <article class="panel">
+    <h2>What you get</h2>
+    <ol>
+      <li>Market framing and demand signals</li>
+      <li>Competitor and alternative landscape</li>
+      <li>Positioning and roadmap guidance</li>
+      <li>MVP and UX concept recommendations</li>
+      <li>Edge-case and trust-risk review</li>
+      <li>Final go / no-go recommendation</li>
+    </ol>
+  </article>
+  <article class="panel">
+    <h2>SEO-ready by default</h2>
+    <p>
+      Public product pages are server-rendered and indexable. Private run pages are protected with
+      <code>noindex</code>. That means the product can be discovered without exposing user-generated analysis pages.
+    </p>
+    <p>
+      Explore the <a href="/how-it-works">methodology page</a> to understand how the system chains specialists.
+    </p>
+  </article>
+</section>
+
+<section class="panel launch-panel" id="launch-form">
+  <h2>Launch a new startup validation run</h2>
+  <p>Paste a concrete business idea. The system will create a live run page and start the six-agent workflow immediately.</p>
+  <form method="post" action="/runs" class="launch-form">
+    <label for="idea_text">Business idea / problem statement</label>
+    <textarea
+      id="idea_text"
+      name="idea_text"
+      rows="8"
+      minlength="20"
+      maxlength="4000"
+      required
+      placeholder="Example: An AI copilot for independent physiotherapists that turns treatment notes into reimbursement-ready documentation and patient follow-up plans."
+    ></textarea>
+    <button class="button primary" type="submit">Run six-agent analysis</button>
+  </form>
+</section>
+{% endblock %}

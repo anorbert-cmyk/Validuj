@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-hero">
+  <p class="eyebrow">Demo output</p>
+  <h1>Public demo report</h1>
+  <p class="lead">
+    This page demonstrates the structure of a completed Validuj analysis. Real runs use the same six-stage layout,
+    but user-specific run pages remain non-indexed.
+  </p>
+</section>
+
+<section class="panel">
+  <pre class="report-block">{{ demo_report }}</pre>
+</section>
+{% endblock %}

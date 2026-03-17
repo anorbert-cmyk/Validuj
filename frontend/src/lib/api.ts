@@ -1,0 +1,346 @@
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+
+function csrfHeaders(): HeadersInit {
+  if (typeof document === "undefined") {
+    return {};
+  }
+  const match = document.cookie.match(/(?:^|;\s*)validuj_csrf=([^;]+)/);
+  const token = match ? decodeURIComponent(match[1]) : "";
+  return token ? { "X-Validuj-Csrf": token } : {};
+}
+
+export type RunSummary = {
+  project_public_id: string | null;
+  public_id: string;
+  idea_text: string;
+  status: "queued" | "running" | "completed" | "failed";
+  current_stage_name: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RunEvent = {
+  event_type: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+};
+
+export type Citation = {
+  title: string;
+  url: string;
+  snippet?: string | null;
+  source: string;
+};
+
+export type StageRecord = {
+  stage_index: number;
+  stage_name: string;
+  status: "pending" | "running" | "completed" | "failed";
+  provider_name: string | null;
+  model_name: string | null;
+  summary: string | null;
+  markdown: string | null;
+  citations?: Citation[];
+};
+
+export type RunRecord = RunSummary & {
+  current_stage: number | null;
+  final_markdown: string | null;
+  failure_message: string | null;
+  events: RunEvent[];
+  stages: StageRecord[];
+};
+
+export type ProjectSummary = {
+  public_id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  run_count: number;
+};
+
+export type SessionUser = {
+  email: string;
+  role: "user" | "admin";
+};
+
+export type SessionRecord = {
+  session_id: string;
+  email: string;
+  role: "user" | "admin";
+  expires_at: string;
+  revoked_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BillingPlan = {
+  name: string;
+  price: number;
+  currency: string;
+  run_limit: number;
+  description: string;
+};
+
+export type SubscriptionRecord = {
+  email: string;
+  plan_name: string;
+  status: string;
+  run_limit?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type CheckoutDestination = {
+  provider?: "stripe" | "mock";
+  checkout_url?: string;
+  publishable_key?: string | null;
+  status?: string;
+};
+
+export type AdminOverview = {
+  total_runs: number;
+  status_totals: Record<string, number>;
+  provider_totals: Record<string, number>;
+  recent_failures: Array<{
+    public_id: string;
+    idea_text: string;
+    failure_message: string | null;
+    updated_at: string;
+  }>;
+};
+
+export async function fetchRuns(): Promise<RunSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/api/runs`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return [];
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load runs");
+  }
+  return response.json();
+}
+
+export async function fetchRun(runId: string): Promise<RunRecord> {
+  const response = await fetch(`${API_BASE_URL}/api/runs/${runId}`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load run");
+  }
+  return response.json();
+}
+
+export function getRunMarkdownDownloadUrl(runId: string): string {
+  return `${API_BASE_URL}/api/runs/${runId}/markdown`;
+}
+
+export async function createRun(
+  ideaText: string,
+  projectPublicId?: string,
+): Promise<{ run_id: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/runs`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...csrfHeaders(),
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      idea_text: ideaText,
+      project_public_id: projectPublicId ?? null,
+    }),
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(typeof payload.detail === "string" ? payload.detail : "Failed to create run");
+  }
+  return response.json();
+}
+
+export async function fetchAdminOverview(): Promise<AdminOverview> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/overview`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load admin overview");
+  }
+  return response.json();
+}
+
+export async function fetchProjects(): Promise<ProjectSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/api/projects`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return [];
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load projects");
+  }
+  return response.json();
+}
+
+export async function createProject(payload: {
+  name: string;
+  description?: string;
+}): Promise<{ project_id: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/projects`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...csrfHeaders(),
+    },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(typeof payload.detail === "string" ? payload.detail : "Failed to create project");
+  }
+  return response.json();
+}
+
+export async function registerUser(payload: {
+  email: string;
+  password: string;
+}): Promise<SessionUser> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...csrfHeaders(),
+    },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to register user");
+  }
+  return response.json();
+}
+
+export async function loginUser(payload: {
+  email: string;
+  password: string;
+}): Promise<SessionUser> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...csrfHeaders(),
+    },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to log in");
+  }
+  return response.json();
+}
+
+export async function fetchSessionUser(): Promise<SessionUser | null> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load session");
+  }
+  return response.json();
+}
+
+export async function logoutUser(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+    headers: csrfHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to log out");
+  }
+}
+
+export async function fetchAdminUsers(): Promise<SessionUser[]> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/admin/users`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load admin users");
+  }
+  return response.json();
+}
+
+export async function fetchUserSessions(): Promise<SessionRecord[]> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/sessions`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return [];
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load sessions");
+  }
+  return response.json();
+}
+
+export async function fetchBillingPlans(): Promise<BillingPlan[]> {
+  const response = await fetch(`${API_BASE_URL}/api/billing/plans`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to load billing plans");
+  }
+  return response.json();
+}
+
+export async function fetchCurrentSubscription(): Promise<SubscriptionRecord | null> {
+  const response = await fetch(`${API_BASE_URL}/api/billing/subscription`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load subscription");
+  }
+  return response.json();
+}
+
+export async function selectSubscription(planName: string): Promise<SubscriptionRecord> {
+  const response = await fetch(`${API_BASE_URL}/api/billing/subscription/${planName}`, {
+    method: "POST",
+    credentials: "include",
+    headers: csrfHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update subscription");
+  }
+  return response.json();
+}
+
+export async function createCheckout(planName: string): Promise<CheckoutDestination> {
+  const response = await fetch(`${API_BASE_URL}/api/billing/checkout/${planName}`, {
+    method: "POST",
+    credentials: "include",
+    headers: csrfHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to create checkout");
+  }
+  return response.json();
+}

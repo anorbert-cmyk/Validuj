@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-hero">
+  <p class="eyebrow">Methodology</p>
+  <h1>How the six-agent Validuj workflow works</h1>
+  <p class="lead">
+    Instead of one oversized prompt, Validuj uses a structured chain of specialists. Each stage produces a compact
+    handoff for the next stage, which reduces context bloat and keeps the analysis focused.
+  </p>
+</section>
+
+<section class="stack">
+  <article class="panel">
+    <h2>1. Market Scout</h2>
+    <p>Frames the problem, target customer, urgency, pain points, and evidence of demand using live search enrichment.</p>
+  </article>
+  <article class="panel">
+    <h2>2. Competitor Analyst</h2>
+    <p>Maps competitors, substitutes, and whitespace opportunities using the market handoff from stage 1.</p>
+  </article>
+  <article class="panel">
+    <h2>3. Strategy Architect</h2>
+    <p>Turns market and competition findings into positioning, roadmap priorities, and go-to-market direction.</p>
+  </article>
+  <article class="panel">
+    <h2>4. Product Designer</h2>
+    <p>Describes the MVP scope, main workflow, information architecture, and product experience design.</p>
+  </article>
+  <article class="panel">
+    <h2>5. Edge-Case Reviewer</h2>
+    <p>Stress-tests operational edge cases, exception paths, and trust or safety concerns.</p>
+  </article>
+  <article class="panel">
+    <h2>6. Risk &amp; Decision Analyst</h2>
+    <p>Summarizes risks, proposes validation experiments, and issues a practical go / no-go recommendation.</p>
+  </article>
+</section>
+
+<section class="grid-two">
+  <article class="panel">
+    <h2>Why handoff matters</h2>
+    <p>
+      The system saves only compact structured state between stages. That means later agents inherit the most
+      important findings without dragging forward every earlier paragraph.
+    </p>
+  </article>
+  <article class="panel">
+    <h2>Why SEO is included</h2>
+    <p>
+      Validuj exposes discoverable public product pages and a demo report while marking private run pages as
+      non-indexable. This keeps the product crawlable without leaking user-specific analysis pages.
+    </p>
+  </article>
+</section>
+{% endblock %}
